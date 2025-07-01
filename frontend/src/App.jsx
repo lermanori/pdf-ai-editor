@@ -8,6 +8,8 @@ import TranslationPanel from './components/TranslationPanel';
 import ProcessingStatus from './components/ProcessingStatus';
 import HowItWorksPanel from './components/HowItWorksPanel';
 import DetectedTextPanel from './components/DetectedTextPanel';
+import FuturisticBackground from './components/FuturisticBackground';
+import Header from './components/Header';
 
 function App() {
   const [file, setFile] = useState(null);
@@ -106,85 +108,90 @@ function App() {
   }, []);
 
   return (
-    <div className="min-h-screen bg-gray-100 font-sans">
-      <Toaster position="top-right" />
+    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 relative overflow-hidden">
+      <FuturisticBackground />
+      
+      <Toaster 
+        position="top-right"
+        toastOptions={{
+          className: 'bg-slate-800/90 text-white border border-cyan-500/30 backdrop-blur-md',
+          style: {
+            background: 'rgba(15, 23, 42, 0.9)',
+            color: 'white',
+            border: '1px solid rgba(6, 182, 212, 0.3)',
+            backdropFilter: 'blur(12px)',
+          },
+        }}
+      />
       
       {/* Header */}
-      <header className="bg-white shadow-sm">
-        <div className="container mx-auto px-4 py-3">
-          <div className="flex justify-between items-center">
-            <h1 className="text-2xl font-bold text-gray-800">
-              📄 PDF AI Editor
-            </h1>
-            {file && (
-              <button
-                onClick={resetApp}
-                className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-md transition-colors"
-              >
-                New Document
-              </button>
-            )}
-          </div>
-        </div>
-      </header>
+      <Header currentStep={file ? 'process' : 'upload'} setCurrentStep={() => {}} onReset={resetApp} />
 
-      <main className="container mx-auto p-4">
+      <main className="container mx-auto p-6 relative z-10">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           <div className="lg:col-span-2">
             {!pdfUrl ? (
-              <UploadForm onFileSelect={handleFileSelect} />
+              <div className="glass-dark rounded-xl p-6 border border-cyan-500/30">
+                <UploadForm onFileSelect={handleFileSelect} />
+              </div>
             ) : showPreview ? (
-              <PDFPreview
-                file={file}
-                fileUrl={pdfUrl}
-                translations={translations}
-                originalRectangles={rectangles}
-                onBack={handleBackFromPreview}
-                onGenerate={handleGenerationComplete}
-                isProcessing={isProcessing}
-                logoUrl={logoUrl}
-                logoPosition={logoPosition}
-              />
+              <div className="glass-dark rounded-xl border border-cyan-500/30">
+                <PDFPreview
+                  file={file}
+                  fileUrl={pdfUrl}
+                  translations={translations}
+                  originalRectangles={rectangles}
+                  onBack={handleBackFromPreview}
+                  onGenerate={handleGenerationComplete}
+                  isProcessing={isProcessing}
+                  logoUrl={logoUrl}
+                  logoPosition={logoPosition}
+                />
+              </div>
             ) : (
-              <PDFViewer
-                file={file}
-                fileUrl={pdfUrl}
-                rectangles={rectangles}
-                translations={translations}
-                detectedRectangles={detectedRectangles}
-                onRectanglesDetected={handleRectanglesDetected}
-                onTextDetected={handleTextDetected}
-                onTranslationsReceived={handleTranslationsReceived}
-                onPreview={handlePreview}
-                isProcessing={isProcessing}
-                setIsProcessing={setIsProcessing}
-                setProcessingStep={setProcessingStep}
-                logoFile={logoFile}
-                logoUrl={logoUrl}
-                logoPosition={logoPosition}
-                setLogoFile={setLogoFile}
-                setLogoUrl={setLogoUrl}
-                setLogoPosition={setLogoPosition}
-                hasPendingChanges={hasPendingChanges}
-                setHasPendingChanges={setHasPendingChanges}
-              />
+              <div className="glass-dark rounded-xl border border-cyan-500/30">
+                <PDFViewer
+                  file={file}
+                  fileUrl={pdfUrl}
+                  rectangles={rectangles}
+                  translations={translations}
+                  detectedRectangles={detectedRectangles}
+                  onRectanglesDetected={handleRectanglesDetected}
+                  onTextDetected={handleTextDetected}
+                  onTranslationsReceived={handleTranslationsReceived}
+                  onPreview={handlePreview}
+                  isProcessing={isProcessing}
+                  setIsProcessing={setIsProcessing}
+                  setProcessingStep={setProcessingStep}
+                  logoFile={logoFile}
+                  logoUrl={logoUrl}
+                  logoPosition={logoPosition}
+                  setLogoFile={setLogoFile}
+                  setLogoUrl={setLogoUrl}
+                  setLogoPosition={setLogoPosition}
+                  hasPendingChanges={hasPendingChanges}
+                  setHasPendingChanges={setHasPendingChanges}
+                />
+              </div>
             )}
           </div>
           <div className="lg:col-span-1">
-            {isProcessing ? (
-              <ProcessingStatus step={processingStep} />
-            ) : translations.length > 0 ? (
-              <TranslationPanel 
-                translations={translations} 
-                setTranslations={setTranslations}
-              />
-            ) : detectedRectangles.length > 0 ? (
-              <DetectedTextPanel 
-                detectedRectangles={detectedRectangles}
-              />
-            ) : (
-              <HowItWorksPanel />
-            )}
+            <div className="glass-dark rounded-xl border border-cyan-500/30 p-4">
+              {isProcessing ? (
+                <ProcessingStatus step={processingStep} />
+              ) : translations.length > 0 ? (
+                <TranslationPanel 
+                  translations={translations} 
+                  setTranslations={setTranslations}
+                />
+              ) : detectedRectangles.length > 0 ? (
+                <DetectedTextPanel 
+                  detectedRectangles={detectedRectangles}
+                />
+              ) : (
+                <HowItWorksPanel />
+              )}
+            </div>
           </div>
         </div>
       </main>
