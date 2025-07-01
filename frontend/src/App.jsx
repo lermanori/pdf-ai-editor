@@ -33,6 +33,14 @@ function App() {
     return '';
   }, [file]);
 
+  // Calculate current step based on app state
+  const currentStep = useMemo(() => {
+    if (!file) return 'upload';
+    if (showPreview) return 'download';
+    if (translations.length > 0) return 'review';
+    return 'process';
+  }, [file, showPreview, translations.length]);
+
   const handleFileSelect = (uploadedFile) => {
     setFile(uploadedFile);
     // Reset all subsequent states when a new file is uploaded
@@ -125,7 +133,7 @@ function App() {
       />
       
       {/* Header */}
-      <Header currentStep={file ? 'process' : 'upload'} setCurrentStep={() => {}} onReset={resetApp} />
+      <Header currentStep={currentStep} setCurrentStep={() => {}} onReset={resetApp} />
 
       <main className="container mx-auto p-6 relative z-10">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -199,4 +207,4 @@ function App() {
   );
 }
 
-export default App; 
+export default App;
