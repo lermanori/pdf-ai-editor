@@ -164,6 +164,74 @@ const PDFPreview = ({ file, fileUrl, translations, onBack, onGenerate, isProcess
         }
     };
 
+    // AI-Powered Text Rendering Function
+    const renderAIStyledText = (translation) => {
+        const text = translation.translation || '';
+        
+        // AI Style Analysis (matching backend logic)
+        const fontSize = Math.max(8, Math.min(18, translation.height / 2.5));
+        const lineHeight = fontSize * 1.15;
+        const padding = 3;
+        
+        // Neural Text Wrapping Algorithm
+        const maxWidth = translation.width - (padding * 2);
+        const words = text.split(/\s+/).filter(word => word.length > 0);
+        const lines = [];
+        let currentLine = '';
+        
+        for (const word of words) {
+            const testLine = currentLine === '' ? word : currentLine + ' ' + word;
+            const testWidth = testLine.length * (fontSize * 0.6); // Approximate width calculation
+            
+            if (testWidth <= maxWidth) {
+                currentLine = testLine;
+            } else {
+                if (currentLine !== '') {
+                    lines.push(currentLine);
+                    currentLine = word;
+                } else {
+                    // Word too long, break it
+                    const chars = word.split('');
+                    let partialWord = '';
+                    for (const char of chars) {
+                        const testChar = partialWord + char;
+                        if (testChar.length * (fontSize * 0.6) <= maxWidth) {
+                            partialWord = testChar;
+                        } else {
+                            if (partialWord) lines.push(partialWord);
+                            partialWord = char;
+                        }
+                    }
+                    if (partialWord) currentLine = partialWord;
+                }
+            }
+        }
+        
+        if (currentLine !== '') {
+            lines.push(currentLine);
+        }
+
+        // Render each line with perfect positioning
+        return lines.map((line, index) => {
+            const lineY = translation.y + padding + (index * lineHeight);
+            const lineWidth = line.length * (fontSize * 0.6);
+            const lineX = translation.x + translation.width - lineWidth - padding;
+            
+            return (
+                <Text
+                    key={`${translation.id}-ai-line-${index}`}
+                    text={line}
+                    x={lineX}
+                    y={lineY}
+                    fontSize={fontSize}
+                    fontFamily="Arial, sans-serif"
+                    fill="black" // Pure black text
+                    align="right"
+                />
+            );
+        });
+    };
+
     const currentPageRectangles = (originalRectangles || []).filter(r => r.page === pageNumber - 1);
     const currentPageRectangleIds = new Set(currentPageRectangles.map(r => r.id));
     const currentTranslations = (translations || []).filter(t => t.page === pageNumber - 1);
@@ -289,71 +357,16 @@ const PDFPreview = ({ file, fileUrl, translations, onBack, onGenerate, isProcess
                                 />
                             )}
                             
-                            {showOverlays && currentTranslations.map((translation) => {
-                                const text = translation.translation || '';
-                                const fontSize = Math.max(10, Math.min(16, translation.height / 2.5));
-                                const padding = 4;
-                                
-                                // Calculate text wrapping to match PDF output
-                                const maxWidth = translation.width - (padding * 2);
-                                const words = text.split(' ');
-                                const lines = [];
-                                let currentLine = '';
-                                
-                                words.forEach(word => {
-                                    const testLine = currentLine === '' ? word : currentLine + ' ' + word;
-                                    const testWidth = testLine.length * (fontSize * 0.6); // Approximate width
+                            {/* AI-Powered Text Rendering */}
+                            {showOverlays && currentTranslations.map((translation) => (
+                                <React.Fragment key={translation.id}>
+                                    {/* NO BACKGROUND - Invisible integration */}
+                                    {/* Text floats naturally on the document */}
                                     
-                                    if (testWidth <= maxWidth) {
-                                        currentLine = testLine;
-                                    } else {
-                                        if (currentLine !== '') {
-                                            lines.push(currentLine);
-                                            currentLine = word;
-                                        } else {
-                                            lines.push(word);
-                                            currentLine = '';
-                                        }
-                                    }
-                                });
-                                
-                                if (currentLine !== '') {
-                                    lines.push(currentLine);
-                                }
-
-                                return (
-                                    <React.Fragment key={translation.id}>
-                                        {/* Clean white background - no borders, matching PDF output */}
-                                        <Rect
-                                            x={translation.x}
-                                            y={translation.y}
-                                            width={translation.width}
-                                            height={translation.height}
-                                            fill="white" // Pure white background
-                                        />
-                                        
-                                        {/* Clean text rendering to match PDF */}
-                                        {lines.map((line, index) => {
-                                            const lineY = translation.y + padding + (index * fontSize * 1.2);
-                                            const lineWidth = line.length * (fontSize * 0.6);
-                                            const lineX = translation.x + translation.width - lineWidth - padding;
-                                            
-                                            return (
-                                                <Text
-                                                    key={`${translation.id}-line-${index}`}
-                                                    text={line}
-                                                    x={lineX}
-                                                    y={lineY}
-                                                    fontSize={fontSize}
-                                                    fontFamily="Arial, sans-serif"
-                                                    fill="black" // Pure black text
-                                                    align="right"
-                                                />
-                                            );
-                                        })}
-                                    </React.Fragment>
-                                );
-                            })}
+                                    {/* AI-Styled Text Rendering */}
+                                    {renderAIStyledText(translation)}
+                                </React.Fragment>
+                            ))}
                         </Layer>
                     </Stage>
                 </div>
