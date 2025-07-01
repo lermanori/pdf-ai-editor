@@ -6,7 +6,6 @@ const path = require('path');
 const { PDFDocument, rgb, StandardFonts, TextAlign } = require('pdf-lib');
 const sharp = require('sharp');
 const fontkit = require('fontkit');
-const textEngine = require('./textRenderingEngine');
 
 // Configure PDF.js for Node.js environment without canvas
 const pdfjsLib = require('pdfjs-dist/legacy/build/pdf.js');
@@ -116,6 +115,96 @@ class EnhancedNodeCanvasFactory {
 }
 
 class PDFService {
+  
+  // AI Text Formatting Analysis
+  async analyzeTextFormatting(text, containerWidth, containerHeight) {
+    console.log('🤖 [AI FORMATTER] Analyzing text formatting requirements...');
+    
+    // AI-powered text analysis
+    const textLength = text.length;
+    const wordCount = text.split(/\s+/).length;
+    const avgWordLength = textLength / wordCount;
+    
+    // Calculate optimal font size based on container and content
+    const baseSize = Math.min(containerWidth / 20, containerHeight / 4);
+    let optimalFontSize = Math.max(8, Math.min(18, baseSize));
+    
+    // Adjust for text density
+    if (textLength > 200) optimalFontSize *= 0.8;
+    if (textLength < 50) optimalFontSize *= 1.2;
+    
+    // Calculate spacing and padding
+    const padding = Math.max(8, optimalFontSize * 0.5);
+    const lineHeight = optimalFontSize * 1.3;
+    
+    const formatting = {
+      fontSize: Math.round(optimalFontSize),
+      lineHeight: Math.round(lineHeight),
+      padding: Math.round(padding),
+      textAlign: 'center', // Center alignment for better appearance
+      maxLines: Math.floor((containerHeight - padding * 2) / lineHeight),
+      backgroundColor: 'white',
+      textColor: 'black',
+      borderRadius: 4
+    };
+    
+    console.log('🤖 [AI FORMATTER] Optimal formatting calculated:', {
+      textLength,
+      wordCount,
+      containerSize: `${containerWidth}x${containerHeight}`,
+      formatting
+    });
+    
+    return formatting;
+  }
+
+  // Smart Text Wrapping with AI
+  smartTextWrap(text, maxWidth, font, fontSize, maxLines) {
+    console.log('🧠 [SMART WRAPPER] Processing text for optimal layout...');
+    
+    const words = text.split(/\s+/).filter(word => word.length > 0);
+    const lines = [];
+    let currentLine = '';
+    
+    for (const word of words) {
+      const testLine = currentLine === '' ? word : currentLine + ' ' + word;
+      const testWidth = font.widthOfTextAtSize(testLine, fontSize);
+      
+      if (testWidth <= maxWidth) {
+        currentLine = testLine;
+      } else {
+        if (currentLine !== '') {
+          lines.push(currentLine);
+          if (lines.length >= maxLines) break; // Respect max lines
+          currentLine = word;
+        } else {
+          // Word too long, break it intelligently
+          const chars = word.split('');
+          let partialWord = '';
+          for (const char of chars) {
+            const testChar = partialWord + char;
+            if (font.widthOfTextAtSize(testChar, fontSize) <= maxWidth) {
+              partialWord = testChar;
+            } else {
+              if (partialWord) {
+                lines.push(partialWord);
+                if (lines.length >= maxLines) break;
+              }
+              partialWord = char;
+            }
+          }
+          if (partialWord && lines.length < maxLines) currentLine = partialWord;
+        }
+      }
+    }
+    
+    if (currentLine !== '' && lines.length < maxLines) {
+      lines.push(currentLine);
+    }
+    
+    console.log('🧠 [SMART WRAPPER] Generated', lines.length, 'optimized lines');
+    return lines;
+  }
   
   // Detect rectangles on the right side of PDF pages
   async detectRightSideRectangles(pdfBuffer) {
@@ -568,7 +657,7 @@ class PDFService {
     return lines;
   }
   
-  // 🎯 NEURAL TEXT OVERLAY SYSTEM - Process full PDF with perfect text rendering
+  // Process full PDF with all modifications
   async processFullPdf(inputPath, outputPath, options) {
     try {
       const { translations, logoFile, logoPosition, removeChinese } = options;
@@ -604,7 +693,7 @@ class PDFService {
       }
       
       const pages = pdfDoc.getPages();
-      console.log(`🎯 [NEURAL OVERLAY] Processing ${pages.length} pages with ${translations.length} translations...`);
+      console.log(`🔄 Processing ${pages.length} pages with ${translations.length} translations...`);
       
       for (let pageIndex = 0; pageIndex < pages.length; pageIndex++) {
         const page = pages[pageIndex];
@@ -626,7 +715,7 @@ class PDFService {
               finalLogoWidth = logoPosition.width * scale;
               finalLogoHeight = logoPosition.height * scale;
               
-              console.log(`🎯 [NEURAL OVERLAY] Logo positioning for page ${pageIndex + 1}:`, {
+              console.log(`🔍 [DEBUG] Logo positioning for page ${pageIndex + 1}:`, {
                 frontendPosition: logoPosition,
                 pdfPosition: { x: finalLogoX, y: finalLogoY, width: finalLogoWidth, height: finalLogoHeight },
                 scale,
@@ -658,12 +747,12 @@ class PDFService {
         }
         
         const pageTranslations = translations.filter(t => t.page === pageIndex);
-        console.log(`🎯 [NEURAL OVERLAY] Page ${pageIndex + 1}: Processing ${pageTranslations.length} translations`);
+        console.log(`📄 Page ${pageIndex + 1}: Processing ${pageTranslations.length} translations`);
         
         for (const translation of pageTranslations) {
           if (translation.translation && translation.translation !== 'Translation failed') {
             
-            console.log(`🎯 [NEURAL OVERLAY] Processing translation for page ${pageIndex + 1}:`, {
+            console.log(`🎯 [WHITE OVERLAY] Processing translation for page ${pageIndex + 1}:`, {
               id: translation.id,
               page: translation.page,
               frontendCoords: { x: translation.x, y: translation.y, width: translation.width, height: translation.height },
@@ -688,7 +777,7 @@ class PDFService {
             const pdfWidth = translation.width * scale;
             const pdfHeight = translation.height * scale;
             
-            console.log(`🎯 [NEURAL OVERLAY] Coordinate conversion for page ${pageIndex + 1}:`, {
+            console.log(`🎯 [WHITE OVERLAY] Coordinate conversion for page ${pageIndex + 1}:`, {
               pageWidth,
               frontendWidth,
               scale,
@@ -699,81 +788,101 @@ class PDFService {
             let text = translation.translation;
             const sanitizedText = text.replace(/[^\u0590-\u05FF\u0041-\u005A\u0061-\u007A\s\d.,!?"':-]/g, '');
 
-            console.log(`🎯 [NEURAL OVERLAY] Text processing for page ${pageIndex + 1}:`, {
+            console.log(`🎯 [WHITE OVERLAY] Text processing for page ${pageIndex + 1}:`, {
               originalText: text,
               sanitizedText: sanitizedText,
               textLength: sanitizedText.length
             });
 
-            // 🧠 STEP 1: Neural Text Layout Analysis
-            console.log('🧠 [NEURAL ENGINE] Starting neural text analysis...');
-            const perfectLayout = textEngine.calculatePerfectLayout(sanitizedText, pdfWidth, pdfHeight);
-            
-            // 🎯 STEP 2: Draw Perfect White Background
+            // 🎯 STEP 1: Draw SOLID WHITE BACKGROUND (Clean Overlay)
             page.drawRectangle({
               x: pdfX,
               y: height - pdfY - pdfHeight, // Y is measured from the bottom in pdf-lib
               width: pdfWidth,
               height: pdfHeight,
               color: rgb(1, 1, 1), // Pure white background
-              borderColor: rgb(0.94, 0.94, 0.94), // Light gray border
-              borderWidth: perfectLayout.borderWidth,
-              // Note: pdf-lib doesn't support border radius directly
+              borderColor: rgb(0.9, 0.9, 0.9), // Light gray border
+              borderWidth: 0.5,
             });
             
-            // 📍 STEP 3: Calculate Perfect Line Positions
-            const linePositions = textEngine.calculateLinePositions(
-              perfectLayout, 
-              pdfX, 
-              height - pdfY - pdfHeight, 
-              pdfWidth
+            // 🤖 STEP 2: AI-Powered Text Formatting Analysis
+            const aiFormatting = await this.analyzeTextFormatting(sanitizedText, pdfWidth, pdfHeight);
+            
+            // 🧠 STEP 3: Smart Text Wrapping with AI
+            const wrappedText = this.smartTextWrap(
+              sanitizedText, 
+              pdfWidth - (aiFormatting.padding * 2), 
+              hebrewFont, 
+              aiFormatting.fontSize,
+              aiFormatting.maxLines
             );
 
-            console.log(`🎯 [NEURAL OVERLAY] Neural text rendering for page ${pageIndex + 1}:`, {
-              perfectLayout: {
-                fontSize: perfectLayout.fontSize,
-                lineCount: perfectLayout.lines.length,
-                padding: perfectLayout.padding,
-                verticalOffset: perfectLayout.verticalOffset
-              },
-              linePositions: linePositions.length
+            console.log(`🎯 [WHITE OVERLAY] AI-powered text rendering for page ${pageIndex + 1}:`, {
+              aiFormatting,
+              wrappedText,
+              textLines: wrappedText.length,
+              boxCoords: { x: pdfX, y: height - pdfY - pdfHeight, width: pdfWidth, height: pdfHeight }
             });
 
             try {
-              // 🎯 STEP 4: Render Perfect Text with Neural Positioning
-              for (const linePos of linePositions) {
-                console.log(`🎯 [NEURAL OVERLAY] Rendering neural line on page ${pageIndex + 1}:`, {
-                  text: linePos.text,
-                  x: linePos.x,
-                  y: linePos.y,
-                  fontSize: perfectLayout.fontSize
-                });
+              // 🎯 STEP 4: Perfect Text Positioning with AI
+              const totalTextHeight = wrappedText.length * aiFormatting.lineHeight;
+              const startY = height - pdfY - aiFormatting.padding - aiFormatting.fontSize;
+              
+              // Center text vertically if there's extra space
+              const extraSpace = pdfHeight - totalTextHeight - (aiFormatting.padding * 2);
+              const verticalOffset = extraSpace > 0 ? extraSpace / 2 : 0;
+
+              for (let i = 0; i < wrappedText.length; i++) {
+                const line = wrappedText[i];
+                const textWidth = hebrewFont.widthOfTextAtSize(line, aiFormatting.fontSize);
                 
-                page.drawText(linePos.text, {
-                  x: linePos.x,
-                  y: linePos.y,
-                  font: hebrewFont,
-                  size: perfectLayout.fontSize,
-                  color: rgb(0, 0, 0), // Pure black text
-                });
+                // AI-powered text alignment (center for better appearance)
+                let textX;
+                if (aiFormatting.textAlign === 'center') {
+                  textX = pdfX + (pdfWidth - textWidth) / 2;
+                } else {
+                  textX = pdfX + pdfWidth - textWidth - aiFormatting.padding; // Right align
+                }
+                
+                const textY = startY + verticalOffset - (i * aiFormatting.lineHeight);
+                
+                // Ensure text doesn't overflow the container
+                if (textY > height - pdfY - pdfHeight + aiFormatting.fontSize) {
+                  console.log(`🎯 [WHITE OVERLAY] Rendering AI-formatted line ${i + 1} on page ${pageIndex + 1}:`, {
+                    line,
+                    textWidth,
+                    textX,
+                    textY,
+                    fontSize: aiFormatting.fontSize
+                  });
+                  
+                  page.drawText(line, {
+                    x: textX,
+                    y: textY,
+                    font: hebrewFont,
+                    size: aiFormatting.fontSize,
+                    color: rgb(0, 0, 0), // Pure black text
+                  });
+                }
               }
-              console.log(`✅ Successfully rendered neural-formatted Hebrew text on page ${pageIndex + 1}`);
+              console.log(`✅ Successfully rendered AI-formatted Hebrew text on page ${pageIndex + 1}`);
             } catch (textError) {
-              console.error(`❌ Error rendering neural-formatted Hebrew text on page ${pageIndex + 1}:`, textError.message);
+              console.error(`❌ Error rendering AI-formatted Hebrew text on page ${pageIndex + 1}:`, textError.message);
             }
           } else {
             console.warn(`⚠️ Skipping failed translation on page ${pageIndex + 1}`);
           }
         }
-        console.log(`✅ Processed page ${pageIndex + 1} with ${pageTranslations.length} neural overlays.`);
+        console.log(`✅ Processed page ${pageIndex + 1} with ${pageTranslations.length} translations.`);
       }
       
       const pdfBytes = await pdfDoc.save();
       await fs.writeFile(outputPath, pdfBytes);
-      console.log(`✅ Neural PDF processing completed and saved to: ${outputPath}`);
+      console.log(`✅ PDF processed and saved to: ${outputPath}`);
       
     } catch (error) {
-      console.error('Error processing PDF with neural engine:', error);
+      console.error('Error processing PDF:', error);
       throw error;
     }
   }

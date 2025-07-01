@@ -1,222 +1,11 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Document, Page, pdfjs } from 'react-pdf';
 import { Stage, Layer, Rect, Text, Image } from 'react-konva';
-import { ArrowLeft, ArrowRight, Download, Eye, ZoomIn, ZoomOut, Sparkles, Brain } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Download, Eye, ZoomIn, ZoomOut, Sparkles } from 'lucide-react';
 import axios from 'axios';
 import { toast } from 'react-hot-toast';
 
 pdfjs.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjs.version}/pdf.worker.min.js`;
-
-// 🧠 Neural Text Rendering Engine for Frontend
-class FrontendTextEngine {
-  constructor() {
-    this.canvas = null;
-    this.context = null;
-    this.initializeCanvas();
-  }
-
-  initializeCanvas() {
-    // Create a virtual canvas for text measurements
-    this.canvas = document.createElement('canvas');
-    this.context = this.canvas.getContext('2d');
-    console.log('✅ Frontend neural text engine initialized');
-  }
-
-  // 🎯 Neural Text Analysis (matching backend)
-  analyzeTextLayout(text, containerWidth, containerHeight) {
-    console.log('🧠 [FRONTEND NEURAL] Analyzing text layout requirements...');
-    
-    const analysis = {
-      textLength: text.length,
-      wordCount: text.split(/\s+/).filter(w => w.length > 0).length,
-      avgWordLength: 0,
-      complexity: 'simple',
-      density: 'normal'
-    };
-
-    analysis.avgWordLength = analysis.textLength / Math.max(analysis.wordCount, 1);
-    
-    // Determine text complexity
-    if (analysis.textLength > 300) analysis.complexity = 'complex';
-    else if (analysis.textLength > 150) analysis.complexity = 'medium';
-    
-    // Determine text density
-    if (analysis.wordCount > 50) analysis.density = 'high';
-    else if (analysis.wordCount > 20) analysis.density = 'medium';
-    else analysis.density = 'low';
-
-    console.log('🧠 [FRONTEND NEURAL] Text analysis complete:', analysis);
-    return analysis;
-  }
-
-  // 🎨 Smart Font Size Calculator (matching backend)
-  calculateOptimalFontSize(analysis, containerWidth, containerHeight) {
-    console.log('🎨 [FRONTEND FONT] Computing optimal font size...');
-    
-    // Base font size calculation
-    const baseSize = Math.min(containerWidth / 25, containerHeight / 6);
-    let fontSize = Math.max(10, Math.min(20, baseSize));
-    
-    // Adjust based on text complexity
-    switch (analysis.complexity) {
-      case 'complex':
-        fontSize *= 0.75;
-        break;
-      case 'medium':
-        fontSize *= 0.85;
-        break;
-      case 'simple':
-        fontSize *= 1.1;
-        break;
-    }
-    
-    // Adjust based on text density
-    switch (analysis.density) {
-      case 'high':
-        fontSize *= 0.8;
-        break;
-      case 'medium':
-        fontSize *= 0.9;
-        break;
-      case 'low':
-        fontSize *= 1.2;
-        break;
-    }
-    
-    const finalSize = Math.round(Math.max(8, Math.min(24, fontSize)));
-    console.log('🎨 [FRONTEND FONT] Optimal font size:', finalSize);
-    return finalSize;
-  }
-
-  // 📏 Precise Text Measurement (matching backend)
-  measureText(text, fontSize, fontFamily = 'Arial') {
-    this.context.font = `${fontSize}px ${fontFamily}`;
-    const metrics = this.context.measureText(text);
-    return {
-      width: metrics.width,
-      height: fontSize * 1.2 // Approximate line height
-    };
-  }
-
-  // 🧠 Neural Text Wrapping Algorithm (matching backend)
-  wrapTextIntelligently(text, maxWidth, fontSize, fontFamily = 'Arial') {
-    console.log('🧠 [FRONTEND WRAPPER] Processing intelligent text wrapping...');
-    
-    const words = text.split(/\s+/).filter(w => w.length > 0);
-    const lines = [];
-    let currentLine = '';
-    
-    for (const word of words) {
-      const testLine = currentLine === '' ? word : currentLine + ' ' + word;
-      const measurement = this.measureText(testLine, fontSize, fontFamily);
-      
-      if (measurement.width <= maxWidth) {
-        currentLine = testLine;
-      } else {
-        if (currentLine !== '') {
-          lines.push(currentLine);
-          currentLine = word;
-        } else {
-          // Handle very long words
-          const chars = word.split('');
-          let partialWord = '';
-          for (const char of chars) {
-            const testChar = partialWord + char;
-            const charMeasurement = this.measureText(testChar, fontSize, fontFamily);
-            if (charMeasurement.width <= maxWidth) {
-              partialWord = testChar;
-            } else {
-              if (partialWord) lines.push(partialWord);
-              partialWord = char;
-            }
-          }
-          if (partialWord) currentLine = partialWord;
-        }
-      }
-    }
-    
-    if (currentLine !== '') {
-      lines.push(currentLine);
-    }
-    
-    console.log('🧠 [FRONTEND WRAPPER] Generated', lines.length, 'optimized lines');
-    return lines;
-  }
-
-  // 🎯 Complete Layout Calculation (matching backend)
-  calculatePerfectLayout(text, containerWidth, containerHeight) {
-    console.log('🎯 [FRONTEND LAYOUT] Calculating perfect text layout...');
-    
-    // Step 1: Analyze text
-    const analysis = this.analyzeTextLayout(text, containerWidth, containerHeight);
-    
-    // Step 2: Calculate optimal font size
-    const fontSize = this.calculateOptimalFontSize(analysis, containerWidth, containerHeight);
-    
-    // Step 3: Calculate spacing and padding
-    const padding = Math.max(12, fontSize * 0.8);
-    const lineHeight = fontSize * 1.4;
-    
-    // Step 4: Calculate available space for text
-    const availableWidth = containerWidth - (padding * 2);
-    const availableHeight = containerHeight - (padding * 2);
-    const maxLines = Math.floor(availableHeight / lineHeight);
-    
-    // Step 5: Wrap text intelligently
-    const lines = this.wrapTextIntelligently(text, availableWidth, fontSize);
-    
-    // Step 6: Calculate positioning
-    const totalTextHeight = lines.length * lineHeight;
-    const verticalOffset = Math.max(0, (availableHeight - totalTextHeight) / 2);
-    
-    const layout = {
-      fontSize,
-      lineHeight,
-      padding,
-      lines: lines.slice(0, maxLines), // Respect max lines
-      totalTextHeight,
-      verticalOffset,
-      textAlign: 'center',
-      backgroundColor: '#ffffff',
-      borderColor: '#f0f0f0',
-      borderWidth: 1,
-      borderRadius: 8,
-      textColor: '#000000'
-    };
-    
-    console.log('🎯 [FRONTEND LAYOUT] Perfect layout calculated:', {
-      fontSize: layout.fontSize,
-      lineCount: layout.lines.length,
-      padding: layout.padding,
-      verticalOffset: layout.verticalOffset
-    });
-    
-    return layout;
-  }
-
-  // 📍 Calculate Line Positions (matching backend)
-  calculateLinePositions(layout, containerX, containerY, containerWidth) {
-    const positions = [];
-    
-    layout.lines.forEach((line, index) => {
-      const lineMeasurement = this.measureText(line, layout.fontSize);
-      
-      // Center align text
-      const lineX = containerX + (containerWidth - lineMeasurement.width) / 2;
-      const lineY = containerY + layout.padding + layout.fontSize + layout.verticalOffset + (index * layout.lineHeight);
-      
-      positions.push({
-        text: line,
-        x: lineX,
-        y: lineY,
-        width: lineMeasurement.width,
-        height: layout.fontSize
-      });
-    });
-    
-    return positions;
-  }
-}
 
 const PDFPreview = ({ file, fileUrl, translations, onBack, onGenerate, isProcessing, originalRectangles, logoUrl, logoPosition }) => {
     const [numPages, setNumPages] = useState(null);
@@ -225,7 +14,6 @@ const PDFPreview = ({ file, fileUrl, translations, onBack, onGenerate, isProcess
     const [showOverlays, setShowOverlays] = useState(true);
     const [stage, setStage] = useState({ scale: 1, x: 0, y: 0 });
     const [logoImage, setLogoImage] = useState(null);
-    const [textEngine] = useState(() => new FrontendTextEngine());
 
     const containerRef = useRef(null);
     const stageRef = useRef(null);
@@ -376,72 +164,152 @@ const PDFPreview = ({ file, fileUrl, translations, onBack, onGenerate, isProcess
         }
     };
 
-    // 🎯 Neural Perfect Preview Rendering Function
-    const renderNeuralPreview = (translation) => {
+    // 🎯 AI-Powered Text Formatting Analysis (matching backend)
+    const analyzeTextFormatting = (text, containerWidth, containerHeight) => {
+        console.log('🤖 [PREVIEW AI FORMATTER] Analyzing text formatting requirements...');
+        
+        // AI-powered text analysis
+        const textLength = text.length;
+        const wordCount = text.split(/\s+/).length;
+        
+        // Calculate optimal font size based on container and content
+        const baseSize = Math.min(containerWidth / 20, containerHeight / 4);
+        let optimalFontSize = Math.max(8, Math.min(18, baseSize));
+        
+        // Adjust for text density
+        if (textLength > 200) optimalFontSize *= 0.8;
+        if (textLength < 50) optimalFontSize *= 1.2;
+        
+        // Calculate spacing and padding
+        const padding = Math.max(8, optimalFontSize * 0.5);
+        const lineHeight = optimalFontSize * 1.3;
+        
+        const formatting = {
+            fontSize: Math.round(optimalFontSize),
+            lineHeight: Math.round(lineHeight),
+            padding: Math.round(padding),
+            textAlign: 'center', // Center alignment for better appearance
+            maxLines: Math.floor((containerHeight - padding * 2) / lineHeight),
+            backgroundColor: 'white',
+            textColor: 'black',
+            borderRadius: 4
+        };
+        
+        console.log('🤖 [PREVIEW AI FORMATTER] Optimal formatting calculated:', {
+            textLength,
+            wordCount,
+            containerSize: `${containerWidth}x${containerHeight}`,
+            formatting
+        });
+        
+        return formatting;
+    };
+
+    // 🧠 Smart Text Wrapping with AI (matching backend)
+    const smartTextWrap = (text, maxWidth, fontSize, maxLines) => {
+        console.log('🧠 [PREVIEW SMART WRAPPER] Processing text for optimal layout...');
+        
+        const words = text.split(/\s+/).filter(word => word.length > 0);
+        const lines = [];
+        let currentLine = '';
+        
+        // Approximate character width for font sizing
+        const charWidth = fontSize * 0.6;
+        const maxCharsPerLine = Math.floor(maxWidth / charWidth);
+        
+        for (const word of words) {
+            const testLine = currentLine === '' ? word : currentLine + ' ' + word;
+            
+            if (testLine.length <= maxCharsPerLine) {
+                currentLine = testLine;
+            } else {
+                if (currentLine !== '') {
+                    lines.push(currentLine);
+                    if (lines.length >= maxLines) break; // Respect max lines
+                    currentLine = word;
+                } else {
+                    // Word too long, break it intelligently
+                    const chars = word.split('');
+                    let partialWord = '';
+                    for (const char of chars) {
+                        const testChar = partialWord + char;
+                        if (testChar.length <= maxCharsPerLine) {
+                            partialWord = testChar;
+                        } else {
+                            if (partialWord) {
+                                lines.push(partialWord);
+                                if (lines.length >= maxLines) break;
+                            }
+                            partialWord = char;
+                        }
+                    }
+                    if (partialWord && lines.length < maxLines) currentLine = partialWord;
+                }
+            }
+        }
+        
+        if (currentLine !== '' && lines.length < maxLines) {
+            lines.push(currentLine);
+        }
+        
+        console.log('🧠 [PREVIEW SMART WRAPPER] Generated', lines.length, 'optimized lines');
+        return lines;
+    };
+
+    // 🎯 Perfect Preview Rendering Function
+    const renderPerfectPreview = (translation) => {
         const text = translation.translation || '';
         
-        console.log('🎯 [NEURAL PREVIEW] Rendering neural preview for:', {
-            id: translation.id,
-            text: text.substring(0, 50) + '...',
-            container: { width: translation.width, height: translation.height }
-        });
+        // 🤖 AI Style Analysis (matching backend logic)
+        const aiFormatting = analyzeTextFormatting(text, translation.width, translation.height);
         
-        // 🧠 Neural Layout Analysis (matching backend exactly)
-        const perfectLayout = textEngine.calculatePerfectLayout(text, translation.width, translation.height);
+        // 🧠 Neural Text Wrapping Algorithm
+        const maxWidth = translation.width - (aiFormatting.padding * 2);
+        const wrappedText = smartTextWrap(text, maxWidth, aiFormatting.fontSize, aiFormatting.maxLines);
         
-        // 📍 Calculate Perfect Line Positions
-        const linePositions = textEngine.calculateLinePositions(
-            perfectLayout, 
-            translation.x, 
-            translation.y, 
-            translation.width
-        );
-
-        console.log('🎯 [NEURAL PREVIEW] Neural layout calculated:', {
-            fontSize: perfectLayout.fontSize,
-            lineCount: perfectLayout.lines.length,
-            padding: perfectLayout.padding,
-            verticalOffset: perfectLayout.verticalOffset,
-            linePositions: linePositions.length
-        });
+        // Calculate total text height for vertical centering
+        const totalTextHeight = wrappedText.length * aiFormatting.lineHeight;
+        const extraSpace = translation.height - totalTextHeight - (aiFormatting.padding * 2);
+        const verticalOffset = extraSpace > 0 ? extraSpace / 2 : 0;
 
         return (
             <React.Fragment key={translation.id}>
-                {/* 🎯 Perfect White Background with Neural Styling */}
+                {/* 🎯 SOLID WHITE BACKGROUND (Clean Overlay) */}
                 <Rect
                     x={translation.x}
                     y={translation.y}
                     width={translation.width}
                     height={translation.height}
-                    fill={perfectLayout.backgroundColor}
-                    stroke={perfectLayout.borderColor}
-                    strokeWidth={perfectLayout.borderWidth}
-                    cornerRadius={perfectLayout.borderRadius}
-                    shadowColor="rgba(0,0,0,0.1)"
-                    shadowBlur={4}
-                    shadowOffset={{ x: 2, y: 2 }}
+                    fill="white"
+                    stroke="#e0e0e0"
+                    strokeWidth={0.5}
+                    cornerRadius={aiFormatting.borderRadius}
                 />
                 
-                {/* 🧠 Neural Text Rendering - Pixel Perfect */}
-                {linePositions.map((linePos, index) => {
-                    console.log(`🎯 [NEURAL PREVIEW] Rendering line ${index + 1}:`, {
-                        text: linePos.text,
-                        x: linePos.x,
-                        y: linePos.y,
-                        fontSize: perfectLayout.fontSize
-                    });
+                {/* 🎯 AI-Formatted Text Rendering */}
+                {wrappedText.map((line, index) => {
+                    const lineWidth = line.length * (aiFormatting.fontSize * 0.6);
+                    
+                    // AI-powered text alignment (center for better appearance)
+                    let lineX;
+                    if (aiFormatting.textAlign === 'center') {
+                        lineX = translation.x + (translation.width - lineWidth) / 2;
+                    } else {
+                        lineX = translation.x + translation.width - lineWidth - aiFormatting.padding; // Right align
+                    }
+                    
+                    const lineY = translation.y + aiFormatting.padding + aiFormatting.fontSize + verticalOffset + (index * aiFormatting.lineHeight);
                     
                     return (
                         <Text
-                            key={`${translation.id}-neural-line-${index}`}
-                            text={linePos.text}
-                            x={linePos.x}
-                            y={linePos.y}
-                            fontSize={perfectLayout.fontSize}
+                            key={`${translation.id}-perfect-line-${index}`}
+                            text={line}
+                            x={lineX}
+                            y={lineY}
+                            fontSize={aiFormatting.fontSize}
                             fontFamily="Arial, sans-serif"
-                            fill={perfectLayout.textColor}
+                            fill="black" // Pure black text
                             align="left"
-                            perfectDrawEnabled={false} // Better performance
                         />
                     );
                 })}
@@ -465,11 +333,6 @@ const PDFPreview = ({ file, fileUrl, translations, onBack, onGenerate, isProcess
                         <ArrowLeft className="w-4 h-4" />
                         <span>Back to Editor</span>
                     </button>
-                    
-                    <div className="flex items-center space-x-2 px-3 py-2 bg-gradient-to-r from-purple-500/20 to-pink-500/20 rounded-lg border border-purple-500/30">
-                        <Brain className="w-4 h-4 text-purple-400" />
-                        <span className="text-purple-400 text-sm font-medium">Neural Preview</span>
-                    </div>
                 </div>
                 
                 <div className="flex items-center space-x-3">
@@ -481,7 +344,7 @@ const PDFPreview = ({ file, fileUrl, translations, onBack, onGenerate, isProcess
                     <button
                         onClick={() => setShowOverlays(!showOverlays)}
                         className={`p-2 rounded-lg border ${showOverlays ? 'bg-cyan-500/20 text-cyan-400 border-cyan-500/30' : 'bg-slate-700/50 text-slate-400 border-slate-600/30'}`}
-                        title="Toggle neural overlays"
+                        title="Toggle translation overlays"
                     >
                         <Eye className="w-4 h-4" />
                     </button>
@@ -521,7 +384,7 @@ const PDFPreview = ({ file, fileUrl, translations, onBack, onGenerate, isProcess
                 </div>
             </div>
 
-            {/* PDF and Neural Overlay */}
+            {/* PDF and Overlay */}
             <div 
                 ref={containerRef} 
                 className="flex-grow relative overflow-auto bg-slate-900/50"
@@ -555,7 +418,7 @@ const PDFPreview = ({ file, fileUrl, translations, onBack, onGenerate, isProcess
                         </Document>
                     </div>
 
-                    {/* Interactive Konva Stage with Neural Rendering */}
+                    {/* Interactive Konva Stage */}
                     <Stage
                         ref={stageRef}
                         width={pdfDimensions.width} 
@@ -579,9 +442,9 @@ const PDFPreview = ({ file, fileUrl, translations, onBack, onGenerate, isProcess
                                 />
                             )}
                             
-                            {/* 🧠 Neural Perfect Preview Rendering */}
+                            {/* 🎯 Perfect Preview Rendering */}
                             {showOverlays && currentTranslations.map((translation) => 
-                                renderNeuralPreview(translation)
+                                renderPerfectPreview(translation)
                             )}
                         </Layer>
                     </Stage>
