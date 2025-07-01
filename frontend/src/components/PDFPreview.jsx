@@ -168,6 +168,18 @@ const PDFPreview = ({ file, fileUrl, translations, onBack, onGenerate, isProcess
     const currentPageRectangleIds = new Set(currentPageRectangles.map(r => r.id));
     const currentTranslations = (translations || []).filter(t => t.page === pageNumber - 1);
 
+    // Enhanced text styling to match PDF output
+    const textStyle = {
+        backgroundColor: 'rgba(255, 255, 255, 0.95)',
+        textColor: '#1a1a1a',
+        borderColor: '#cccccc',
+        borderWidth: 1,
+        padding: 4,
+        fontSize: 12,
+        fontFamily: 'Arial, sans-serif',
+        lineHeight: 1.3
+    };
+
     return (
         <div className="flex flex-col h-full glass-dark rounded-xl border border-cyan-500/30 shadow-2xl">
             {/* Toolbar */}
@@ -291,33 +303,68 @@ const PDFPreview = ({ file, fileUrl, translations, onBack, onGenerate, isProcess
                             
                             {showOverlays && currentTranslations.map((translation) => {
                                 const text = translation.translation || '';
-                                const fontSize = Math.max(8, Math.min(16, translation.height / 3));
+                                const fontSize = Math.max(10, Math.min(18, translation.height / 2.5));
+                                
+                                // Calculate text wrapping
+                                const maxWidth = translation.width - (textStyle.padding * 2);
+                                const words = text.split(' ');
+                                const lines = [];
+                                let currentLine = '';
+                                
+                                words.forEach(word => {
+                                    const testLine = currentLine === '' ? word : currentLine + ' ' + word;
+                                    const testWidth = testLine.length * (fontSize * 0.6); // Approximate width
+                                    
+                                    if (testWidth <= maxWidth) {
+                                        currentLine = testLine;
+                                    } else {
+                                        if (currentLine !== '') {
+                                            lines.push(currentLine);
+                                            currentLine = word;
+                                        } else {
+                                            lines.push(word);
+                                            currentLine = '';
+                                        }
+                                    }
+                                });
+                                
+                                if (currentLine !== '') {
+                                    lines.push(currentLine);
+                                }
 
                                 return (
                                     <React.Fragment key={translation.id}>
-                                        {/* White background and red border */}
+                                        {/* Enhanced background with styling */}
                                         <Rect
-                                            x={translation.x}
-                                            y={translation.y}
-                                            width={translation.width}
-                                            height={translation.height}
-                                            fill="white"
-                                            stroke="red"
-                                            strokeWidth={1}
+                                            x={translation.x - textStyle.padding}
+                                            y={translation.y - textStyle.padding}
+                                            width={translation.width + (textStyle.padding * 2)}
+                                            height={translation.height + (textStyle.padding * 2)}
+                                            fill={textStyle.backgroundColor}
+                                            stroke={textStyle.borderColor}
+                                            strokeWidth={textStyle.borderWidth}
+                                            cornerRadius={2}
                                         />
-                                        {/* Translated Text */}
-                                        <Text
-                                            text={text}
-                                            x={translation.x + 2} // Padding from left
-                                            y={translation.y + 2} // Padding from top
-                                            width={translation.width - 4} // Padding
-                                            height={translation.height - 4} // Padding
-                                            fontSize={fontSize}
-                                            fontFamily="Arial" // Use a common font
-                                            fill="black"
-                                            align="right" // RTL alignment
-                                            verticalAlign="top"
-                                        />
+                                        
+                                        {/* Enhanced text rendering */}
+                                        {lines.map((line, index) => {
+                                            const lineY = translation.y + textStyle.padding + (index * fontSize * textStyle.lineHeight);
+                                            const lineWidth = line.length * (fontSize * 0.6);
+                                            const lineX = translation.x + translation.width - lineWidth - textStyle.padding;
+                                            
+                                            return (
+                                                <Text
+                                                    key={`${translation.id}-line-${index}`}
+                                                    text={line}
+                                                    x={lineX}
+                                                    y={lineY}
+                                                    fontSize={fontSize}
+                                                    fontFamily={textStyle.fontFamily}
+                                                    fill={textStyle.textColor}
+                                                    align="right"
+                                                />
+                                            );
+                                        })}
                                     </React.Fragment>
                                 );
                             })}

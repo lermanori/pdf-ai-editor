@@ -707,54 +707,82 @@ class PDFService {
               textLength: sanitizedText.length
             });
 
-            // 3. Draw the white box using the corrected PDF coordinates
+            // Enhanced text styling options
+            const textStyle = {
+              backgroundColor: { r: 1, g: 1, b: 1, alpha: 0.95 }, // Semi-transparent white background
+              textColor: { r: 0.1, g: 0.1, b: 0.1 }, // Dark gray text for better readability
+              borderColor: { r: 0.8, g: 0.8, b: 0.8 }, // Light gray border
+              borderWidth: 0.5,
+              padding: 4,
+              lineHeight: 1.3,
+              fontWeight: 'normal'
+            };
+
+            // 3. Draw the background with enhanced styling
             page.drawRectangle({
-              x: pdfX,
-              y: height - pdfY - pdfHeight, // Y is measured from the bottom in pdf-lib
-              width: pdfWidth,
-              height: pdfHeight,
-              color: rgb(1, 1, 1),
+              x: pdfX - textStyle.padding,
+              y: height - pdfY - pdfHeight - textStyle.padding,
+              width: pdfWidth + (textStyle.padding * 2),
+              height: pdfHeight + (textStyle.padding * 2),
+              color: rgb(textStyle.backgroundColor.r, textStyle.backgroundColor.g, textStyle.backgroundColor.b),
+              opacity: textStyle.backgroundColor.alpha,
+              borderColor: rgb(textStyle.borderColor.r, textStyle.borderColor.g, textStyle.borderColor.b),
+              borderWidth: textStyle.borderWidth,
             });
             
-            const fontSize = Math.max(8, Math.min(16, pdfHeight / 3));
-            const wrappedText = this.wrapTextForPdf(sanitizedText, pdfWidth - 4, hebrewFont, fontSize);
+            // Calculate optimal font size based on container height
+            const baseFontSize = Math.max(10, Math.min(18, pdfHeight / 2.5));
+            const fontSize = baseFontSize;
+            
+            // Wrap text with better line spacing
+            const wrappedText = this.wrapTextForPdf(sanitizedText, pdfWidth - (textStyle.padding * 2), hebrewFont, fontSize);
 
-            console.log(`🔍 [DEBUG] Text rendering for page ${pageIndex + 1}:`, {
+            console.log(`🔍 [DEBUG] Enhanced text rendering for page ${pageIndex + 1}:`, {
               fontSize,
               wrappedText,
               textLines: wrappedText.length,
+              textStyle,
               boxCoords: { x: pdfX, y: height - pdfY - pdfHeight, width: pdfWidth, height: pdfHeight }
             });
 
             try {
-              // 4. Draw the text line by line with corrected positioning
-              let yPos = height - pdfY - fontSize;
+              // 4. Draw the text with enhanced styling
+              const lineSpacing = fontSize * textStyle.lineHeight;
+              let yPos = height - pdfY - textStyle.padding - fontSize;
 
-              for (const line of wrappedText) {
+              for (let i = 0; i < wrappedText.length; i++) {
+                const line = wrappedText[i];
                 const textWidth = hebrewFont.widthOfTextAtSize(line, fontSize);
-                const textX = pdfX + pdfWidth - textWidth - 5; // Manually calculate right alignment
                 
-                console.log(`🔍 [DEBUG] Drawing text line on page ${pageIndex + 1}:`, {
-                  line,
-                  textWidth,
-                  textX,
-                  yPos,
-                  fontSize
-                });
+                // Right-align text with proper padding
+                const textX = pdfX + pdfWidth - textWidth - textStyle.padding;
                 
-                page.drawText(line, {
-                  x: textX,
-                  y: yPos,
-                  font: hebrewFont,
-                  size: fontSize,
-                  color: rgb(0, 0, 0),
-                });
-                // Move down for the next line
-                yPos -= (fontSize * 1.2);
+                // Ensure text doesn't overflow the container
+                if (yPos > height - pdfY - pdfHeight + fontSize) {
+                  console.log(`🔍 [DEBUG] Drawing enhanced text line ${i + 1} on page ${pageIndex + 1}:`, {
+                    line,
+                    textWidth,
+                    textX,
+                    yPos,
+                    fontSize,
+                    color: textStyle.textColor
+                  });
+                  
+                  page.drawText(line, {
+                    x: textX,
+                    y: yPos,
+                    font: hebrewFont,
+                    size: fontSize,
+                    color: rgb(textStyle.textColor.r, textStyle.textColor.g, textStyle.textColor.b),
+                  });
+                }
+                
+                // Move down for the next line with proper spacing
+                yPos -= lineSpacing;
               }
-              console.log(`✅ Successfully drew final Hebrew text on page ${pageIndex + 1}`);
+              console.log(`✅ Successfully drew enhanced Hebrew text on page ${pageIndex + 1}`);
             } catch (textError) {
-              console.error(`❌ Error drawing final Hebrew text on page ${pageIndex + 1}:`, textError.message);
+              console.error(`❌ Error drawing enhanced Hebrew text on page ${pageIndex + 1}:`, textError.message);
             }
           } else {
             console.warn(`⚠️ Skipping failed translation on page ${pageIndex + 1}`);
@@ -773,26 +801,34 @@ class PDFService {
     }
   }
   
-  // Helper to wrap text for pdf-lib
+  // Helper to wrap text for pdf-lib with better spacing
   wrapTextForPdf(text, maxWidth, font, fontSize) {
     const words = text.split(' ');
     const lines = [];
     let currentLine = '';
 
     for (const word of words) {
-      const currentWidth = font.widthOfTextAtSize(currentLine, fontSize);
-      const wordWidth = font.widthOfTextAtSize(word, fontSize);
+      const testLine = currentLine === '' ? word : currentLine + ' ' + word;
+      const testWidth = font.widthOfTextAtSize(testLine, fontSize);
       
-      if (currentLine === '') {
-        currentLine = word;
-      } else if (currentWidth + wordWidth < maxWidth) {
-        currentLine += ' ' + word;
+      if (testWidth <= maxWidth) {
+        currentLine = testLine;
       } else {
-        lines.push(currentLine);
-        currentLine = word;
+        if (currentLine !== '') {
+          lines.push(currentLine);
+          currentLine = word;
+        } else {
+          // Word is too long, force it on its own line
+          lines.push(word);
+          currentLine = '';
+        }
       }
     }
-    lines.push(currentLine);
+    
+    if (currentLine !== '') {
+      lines.push(currentLine);
+    }
+    
     return lines;
   }
   
