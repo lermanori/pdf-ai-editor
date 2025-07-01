@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Document, Page, pdfjs } from 'react-pdf';
 import { Stage, Layer, Label, Tag, Text, Image, Circle, Rect } from 'react-konva';
-import { ArrowLeft, ArrowRight, Download, Eye, ZoomIn, ZoomOut } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Download, Eye, ZoomIn, ZoomOut, Sparkles } from 'lucide-react';
 import axios from 'axios';
 import { toast } from 'react-hot-toast';
 
@@ -169,49 +169,49 @@ const PDFPreview = ({ file, fileUrl, translations, onBack, onGenerate, isProcess
     const currentTranslations = (translations || []).filter(t => t.page === pageNumber - 1);
 
     return (
-        <div className="flex flex-col h-full bg-white rounded-lg shadow-lg">
+        <div className="flex flex-col h-full glass-dark rounded-xl border border-cyan-500/30 shadow-2xl">
             {/* Toolbar */}
-            <div className="flex items-center justify-between p-2 border-b bg-gray-50">
-                <div className="flex items-center space-x-2">
+            <div className="flex items-center justify-between p-4 border-b border-cyan-500/20 bg-slate-800/50">
+                <div className="flex items-center space-x-3">
                     <button
                         onClick={onBack}
-                        className="flex items-center space-x-2 px-3 py-2 text-gray-600 hover:text-gray-800 hover:bg-gray-100 rounded-md transition-colors"
+                        className="flex items-center space-x-2 px-4 py-2 text-slate-300 hover:text-white hover:bg-slate-700/50 rounded-lg transition-colors border border-slate-600/30"
                     >
                         <ArrowLeft className="w-4 h-4" />
                         <span>Back to Editor</span>
                     </button>
                 </div>
                 
-                <div className="flex items-center space-x-2">
-                    <div className="flex items-center space-x-1 bg-gray-200 p-1 rounded-md">
-                        <button onClick={() => handleZoom('out')} className="p-1.5 rounded-md hover:bg-gray-300"><ZoomOut className="w-4 h-4" /></button>
-                        <div className="text-sm font-semibold w-12 text-center">{(stage.scale * 100).toFixed(0)}%</div>
-                        <button onClick={() => handleZoom('in')} className="p-1.5 rounded-md hover:bg-gray-300"><ZoomIn className="w-4 h-4" /></button>
+                <div className="flex items-center space-x-3">
+                    <div className="flex items-center space-x-1 bg-slate-700/50 p-1 rounded-lg border border-slate-600/30">
+                        <button onClick={() => handleZoom('out')} className="p-2 rounded-md hover:bg-slate-600/50 text-slate-300"><ZoomOut className="w-4 h-4" /></button>
+                        <div className="text-sm font-semibold w-12 text-center text-slate-300">{(stage.scale * 100).toFixed(0)}%</div>
+                        <button onClick={() => handleZoom('in')} className="p-2 rounded-md hover:bg-slate-600/50 text-slate-300"><ZoomIn className="w-4 h-4" /></button>
                     </div>
                     <button
                         onClick={() => setShowOverlays(!showOverlays)}
-                        className={`p-2 rounded-md ${showOverlays ? 'bg-blue-100 text-blue-600' : 'bg-gray-100 text-gray-600'}`}
+                        className={`p-2 rounded-lg border ${showOverlays ? 'bg-cyan-500/20 text-cyan-400 border-cyan-500/30' : 'bg-slate-700/50 text-slate-400 border-slate-600/30'}`}
                         title="Toggle translation overlays"
                     >
                         <Eye className="w-4 h-4" />
                     </button>
                     
                     {numPages > 1 && (
-                    <div className="flex items-center space-x-2 border-l pl-2 ml-2">
+                    <div className="flex items-center space-x-2 border-l border-slate-600/30 pl-3 ml-3">
                         <button
                             onClick={() => setPageNumber(Math.max(1, pageNumber - 1))}
                             disabled={pageNumber <= 1}
-                            className="p-2 rounded-md bg-gray-100 text-gray-600 hover:bg-gray-200 disabled:opacity-50"
+                            className="p-2 rounded-lg bg-slate-700/50 text-slate-300 hover:bg-slate-600/50 disabled:opacity-50 border border-slate-600/30"
                         >
                             <ArrowLeft className="w-4 h-4" />
                         </button>
-                        <span className="text-sm font-medium text-gray-700">
+                        <span className="text-sm font-medium text-slate-300 px-3">
                             Page {pageNumber} of {numPages}
                         </span>
                         <button
                             onClick={() => setPageNumber(Math.min(numPages, pageNumber + 1))}
                             disabled={pageNumber >= numPages}
-                            className="p-2 rounded-md bg-gray-100 text-gray-600 hover:bg-gray-200 disabled:opacity-50"
+                            className="p-2 rounded-lg bg-slate-700/50 text-slate-300 hover:bg-slate-600/50 disabled:opacity-50 border border-slate-600/30"
                         >
                             <ArrowRight className="w-4 h-4" />
                         </button>
@@ -219,13 +219,13 @@ const PDFPreview = ({ file, fileUrl, translations, onBack, onGenerate, isProcess
                     )}
                 </div>
                 
-                <div className="flex items-center space-x-2">
+                <div className="flex items-center space-x-3">
                     <button
                         onClick={handleGeneratePDF}
                         disabled={isProcessing}
-                        className="px-6 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 disabled:opacity-50 flex items-center space-x-2 font-semibold"
+                        className="px-6 py-3 bg-gradient-to-r from-emerald-500 to-green-500 hover:from-emerald-600 hover:to-green-600 text-white rounded-lg disabled:opacity-50 flex items-center space-x-2 font-semibold shadow-lg shadow-emerald-500/25 border-0"
                     >
-                        <Download className="w-5 h-5" />
+                        <Sparkles className="w-5 h-5" />
                         <span>Generate PDF</span>
                     </button>
                 </div>
@@ -234,7 +234,7 @@ const PDFPreview = ({ file, fileUrl, translations, onBack, onGenerate, isProcess
             {/* PDF and Overlay */}
             <div 
                 ref={containerRef} 
-                className="flex-grow relative overflow-auto bg-gray-200"
+                className="flex-grow relative overflow-auto bg-slate-900/50"
                 style={{ height: pdfDimensions.height ? (pdfDimensions.height * stage.scale + 40) : 'calc(100vh - 250px)' }}
             >
                 <div 
@@ -260,7 +260,7 @@ const PDFPreview = ({ file, fileUrl, translations, onBack, onGenerate, isProcess
                                 pageNumber={pageNumber}
                                 onLoadSuccess={onPageLoadSuccess}
                                 width={pdfDimensions.width}
-                                loading={<div className="p-8 text-center">Loading page...</div>}
+                                loading={<div className="p-8 text-center text-slate-400">Loading page...</div>}
                             />
                         </Document>
                     </div>
@@ -329,4 +329,4 @@ const PDFPreview = ({ file, fileUrl, translations, onBack, onGenerate, isProcess
     );
 };
 
-export default PDFPreview; 
+export default PDFPreview;

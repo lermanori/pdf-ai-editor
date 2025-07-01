@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { Document, Page, pdfjs } from 'react-pdf';
 import { Stage, Layer, Rect, Text, Transformer, Image } from 'react-konva';
-import { Eye, Zap, Download, Move, Plus, Trash2, Copy, Pin, ZoomIn, ZoomOut, Search, ArrowLeft, ArrowRight } from 'lucide-react';
+import { Eye, Zap, Download, Move, Plus, Trash2, Copy, Pin, ZoomIn, ZoomOut, Search, ArrowLeft, ArrowRight, FileText, Languages, Sparkles } from 'lucide-react';
 import toast from 'react-hot-toast';
 import axios from 'axios';
 import ProcessingStatus from './ProcessingStatus';
@@ -716,46 +716,46 @@ const PDFViewer = ({
   }
 
   return (
-    <div className="flex flex-col h-full bg-white rounded-lg shadow-lg">
+    <div className="flex flex-col h-full glass-dark rounded-xl border border-cyan-500/30 shadow-2xl">
       {/* Toolbar */}
       <TooltipProvider>
-        <div className="flex items-center justify-between p-2 border-b bg-gray-50">
+        <div className="flex items-center justify-between p-4 border-b border-cyan-500/20 bg-slate-800/50">
           {/* Left: File Info */}
           <div className="flex items-center space-x-4">
-            <h3 className="text-lg font-semibold text-gray-900">
+            <h3 className="text-lg font-semibold text-white">
               {file?.originalName || 'PDF Document'}
             </h3>
             {file?.size && (
-              <span className="text-sm text-gray-500">
+              <span className="text-sm text-slate-400">
                 {(file.size / 1024 / 1024).toFixed(1)} MB
               </span>
             )}
           </div>
           
           {/* Center: View Controls */}
-          <div className="flex items-center space-x-2">
-            <div className="flex items-center space-x-1 bg-gray-200 p-1 rounded-md">
-              <button onClick={() => handleZoom('out')} className="p-1.5 rounded-md hover:bg-gray-300"><ZoomOut className="w-4 h-4" /></button>
-              <div className="text-sm font-semibold w-12 text-center">{(stage.scale * 100).toFixed(0)}%</div>
-              <button onClick={() => handleZoom('in')} className="p-1.5 rounded-md hover:bg-gray-300"><ZoomIn className="w-4 h-4" /></button>
+          <div className="flex items-center space-x-3">
+            <div className="flex items-center space-x-1 bg-slate-700/50 p-1 rounded-lg border border-slate-600/30">
+              <button onClick={() => handleZoom('out')} className="p-2 rounded-md hover:bg-slate-600/50 text-slate-300"><ZoomOut className="w-4 h-4" /></button>
+              <div className="text-sm font-semibold w-12 text-center text-slate-300">{(stage.scale * 100).toFixed(0)}%</div>
+              <button onClick={() => handleZoom('in')} className="p-2 rounded-md hover:bg-slate-600/50 text-slate-300"><ZoomIn className="w-4 h-4" /></button>
             </div>
             
             {numPages > 1 && (
-              <div className="flex items-center space-x-2 border-l pl-2 ml-2">
+              <div className="flex items-center space-x-2 border-l border-slate-600/30 pl-3 ml-3">
                 <button
                   onClick={() => setPageNumber(pageNumber - 1)}
                   disabled={pageNumber <= 1}
-                  className="p-2 rounded-md bg-gray-100 text-gray-600 hover:bg-gray-200 disabled:opacity-50"
+                  className="p-2 rounded-md bg-slate-700/50 text-slate-300 hover:bg-slate-600/50 disabled:opacity-50 border border-slate-600/30"
                 >
                   <ArrowLeft className="w-4 h-4" />
                 </button>
-                <span className="text-sm font-medium text-gray-700">
+                <span className="text-sm font-medium text-slate-300 px-3">
                   Page {pageNumber} of {numPages}
                 </span>
                 <button
                   onClick={() => setPageNumber(pageNumber + 1)}
                   disabled={pageNumber >= numPages}
-                  className="p-2 rounded-md bg-gray-100 text-gray-600 hover:bg-gray-200 disabled:opacity-50"
+                  className="p-2 rounded-md bg-slate-700/50 text-slate-300 hover:bg-slate-600/50 disabled:opacity-50 border border-slate-600/30"
                 >
                   <ArrowRight className="w-4 h-4" />
                 </button>
@@ -764,7 +764,7 @@ const PDFViewer = ({
 
             <button
               onClick={() => setShowRectangles(!showRectangles)}
-              className={`p-2 rounded-md ${showRectangles ? 'bg-blue-100 text-blue-600' : 'bg-gray-100 text-gray-600'}`}
+              className={`p-2 rounded-md border ${showRectangles ? 'bg-cyan-500/20 text-cyan-400 border-cyan-500/30' : 'bg-slate-700/50 text-slate-400 border-slate-600/30'}`}
               title="Toggle rectangles"
             >
               <Eye className="w-4 h-4" />
@@ -772,7 +772,7 @@ const PDFViewer = ({
 
             <button
               onClick={() => setIsDragMode(!isDragMode)}
-              className={`p-2 rounded-md ${isDragMode ? 'bg-green-100 text-green-600' : 'bg-gray-100 text-gray-600'}`}
+              className={`p-2 rounded-md border ${isDragMode ? 'bg-green-500/20 text-green-400 border-green-500/30' : 'bg-slate-700/50 text-slate-400 border-slate-600/30'}`}
               title="Toggle drag/resize mode"
             >
               <Move className="w-4 h-4" />
@@ -781,7 +781,7 @@ const PDFViewer = ({
             {isDragMode && (
               <button
                 onClick={resetRectangles}
-                className="px-3 py-2 text-xs bg-orange-100 text-orange-600 rounded-md hover:bg-orange-200"
+                className="px-3 py-2 text-xs bg-orange-500/20 text-orange-400 rounded-md hover:bg-orange-500/30 border border-orange-500/30"
               >
                 Reset
               </button>
@@ -793,8 +793,8 @@ const PDFViewer = ({
             {hasPendingChanges ? (
               <Tooltip>
                 <TooltipTrigger asChild>
-                  <Button onClick={handleApplyChanges} disabled={isProcessing} variant="default" className="bg-green-600 hover:bg-green-700">
-                    <Zap className="w-4 h-4" />
+                  <Button onClick={handleApplyChanges} disabled={isProcessing} className="bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 text-white border-0 shadow-lg shadow-green-500/25">
+                    <Sparkles className="w-4 h-4" />
                   </Button>
                 </TooltipTrigger>
                 <TooltipContent>
@@ -806,8 +806,8 @@ const PDFViewer = ({
                 {localRectangles.length === 0 && (
                   <Tooltip>
                     <TooltipTrigger asChild>
-                      <Button onClick={detectRectangles} disabled={isProcessing}>
-                        <Eye className="w-4 h-4" />
+                      <Button onClick={detectRectangles} disabled={isProcessing} className="bg-gradient-to-r from-cyan-500 to-blue-500 hover:from-cyan-600 hover:to-blue-600 text-white border-0 shadow-lg shadow-cyan-500/25">
+                        <Search className="w-4 h-4" />
                       </Button>
                     </TooltipTrigger>
                     <TooltipContent>
@@ -819,8 +819,8 @@ const PDFViewer = ({
                 {localRectangles.length > 0 && detectionStep !== 'detected' && (
                   <Tooltip>
                     <TooltipTrigger asChild>
-                      <Button onClick={detectTextFromRectangles} disabled={isProcessing}>
-                        <Zap className="w-4 h-4" />
+                      <Button onClick={detectTextFromRectangles} disabled={isProcessing} className="bg-gradient-to-r from-purple-500 to-violet-500 hover:from-purple-600 hover:to-violet-600 text-white border-0 shadow-lg shadow-purple-500/25">
+                        <FileText className="w-4 h-4" />
                       </Button>
                     </TooltipTrigger>
                     <TooltipContent>
@@ -832,8 +832,8 @@ const PDFViewer = ({
                 {detectionStep === 'detected' && translations.length === 0 && (
                   <Tooltip>
                     <TooltipTrigger asChild>
-                      <Button onClick={translateRectangles} disabled={isProcessing}>
-                        <Zap className="w-4 h-4" />
+                      <Button onClick={translateRectangles} disabled={isProcessing} className="bg-gradient-to-r from-pink-500 to-rose-500 hover:from-pink-600 hover:to-rose-600 text-white border-0 shadow-lg shadow-pink-500/25">
+                        <Languages className="w-4 h-4" />
                       </Button>
                     </TooltipTrigger>
                     <TooltipContent>
@@ -846,8 +846,8 @@ const PDFViewer = ({
                   <>
                     <Tooltip>
                       <TooltipTrigger asChild>
-                        <Button onClick={translateRectangles} disabled={isProcessing}>
-                          <Zap className="w-4 h-4" />
+                        <Button onClick={translateRectangles} disabled={isProcessing} className="bg-gradient-to-r from-pink-500 to-rose-500 hover:from-pink-600 hover:to-rose-600 text-white border-0 shadow-lg shadow-pink-500/25">
+                          <Languages className="w-4 h-4" />
                         </Button>
                       </TooltipTrigger>
                       <TooltipContent>
@@ -856,7 +856,7 @@ const PDFViewer = ({
                     </Tooltip>
                     <Tooltip>
                       <TooltipTrigger asChild>
-                        <Button onClick={() => onPreview && onPreview(localRectangles, logoFile, logoUrl, logoPosition)} disabled={isProcessing} variant="outline">
+                        <Button onClick={() => onPreview && onPreview(localRectangles, logoFile, logoUrl, logoPosition)} disabled={isProcessing} className="bg-slate-700/50 hover:bg-slate-600/50 text-slate-300 border border-slate-600/30">
                           <Eye className="w-4 h-4" />
                         </Button>
                       </TooltipTrigger>
@@ -866,12 +866,13 @@ const PDFViewer = ({
                     </Tooltip>
                     <Tooltip>
                       <TooltipTrigger asChild>
-                        <Button onClick={processAndDownload} disabled={isProcessing} className="bg-purple-600 hover:bg-purple-700">
-                          <Download className="w-4 h-4" />
+                        <Button onClick={processAndDownload} disabled={isProcessing} className="bg-gradient-to-r from-emerald-500 to-green-500 hover:from-emerald-600 hover:to-green-600 text-white border-0 shadow-lg shadow-emerald-500/25 px-6">
+                          <Download className="w-4 h-4 mr-2" />
+                          <span>Process PDF</span>
                         </Button>
                       </TooltipTrigger>
                       <TooltipContent>
-                        <p>Process PDF</p>
+                        <p>Process & Download PDF</p>
                       </TooltipContent>
                     </Tooltip>
                   </>
@@ -885,7 +886,7 @@ const PDFViewer = ({
       {/* PDF and Overlay */}
       <div 
         ref={containerRef}
-        className="flex-grow relative overflow-auto bg-gray-200" 
+        className="flex-grow relative overflow-auto bg-slate-900/50" 
         style={{ height: pdfDimensions.height ? (pdfDimensions.height * stage.scale + 40) : 'calc(100vh - 250px)' }}
       >
         <div 
@@ -912,7 +913,7 @@ const PDFViewer = ({
                 pageNumber={pageNumber}
                 onLoadSuccess={onPageLoadSuccess}
                 width={pdfDimensions.width}
-                loading={<div className="p-8 text-center">Loading page...</div>}
+                loading={<div className="p-8 text-center text-slate-400">Loading page...</div>}
               />
             </Document>
           </div>
@@ -1066,14 +1067,14 @@ const PDFViewer = ({
       
       {/* Footer with Manual Tools & Pagination */}
       <TooltipProvider>
-        <div className="p-2 border-t bg-gray-50">
+        <div className="p-4 border-t border-cyan-500/20 bg-slate-800/50">
           <div className="flex justify-between items-center">
             {/* Manual Tools */}
-            <div className="flex items-center space-x-2">
-              <span className="text-sm font-semibold text-gray-700">Manual Tools:</span>
+            <div className="flex items-center space-x-3">
+              <span className="text-sm font-semibold text-slate-300">Manual Tools:</span>
               <Tooltip>
                 <TooltipTrigger asChild>
-                  <Button onClick={addNewRectangle} variant="outline" size="icon">
+                  <Button onClick={addNewRectangle} variant="outline" size="icon" className="bg-slate-700/50 border-slate-600/30 text-slate-300 hover:bg-slate-600/50">
                     <Plus className="w-4 h-4" />
                   </Button>
                 </TooltipTrigger>
@@ -1083,7 +1084,7 @@ const PDFViewer = ({
               </Tooltip>
               <Tooltip>
                 <TooltipTrigger asChild>
-                  <Button onClick={addRepeatedRectangle} variant="outline" size="icon">
+                  <Button onClick={addRepeatedRectangle} variant="outline" size="icon" className="bg-slate-700/50 border-slate-600/30 text-slate-300 hover:bg-slate-600/50">
                     <Copy className="w-4 h-4" />
                   </Button>
                 </TooltipTrigger>
@@ -1093,10 +1094,10 @@ const PDFViewer = ({
               </Tooltip>
               
               {/* Logo Upload */}
-              <div className="flex items-center space-x-2 border-l pl-2 ml-2">
-                <span className="text-sm font-semibold text-gray-700">Logo:</span>
+              <div className="flex items-center space-x-3 border-l border-slate-600/30 pl-3 ml-3">
+                <span className="text-sm font-semibold text-slate-300">Logo:</span>
                 {!logoFile ? (
-                  <label className="p-2 rounded-md bg-gray-100 text-gray-600 hover:bg-blue-100 hover:text-blue-600 cursor-pointer">
+                  <label className="p-2 rounded-md bg-slate-700/50 text-slate-300 hover:bg-cyan-500/20 hover:text-cyan-400 cursor-pointer border border-slate-600/30 hover:border-cyan-500/30 transition-colors">
                     <input
                       type="file"
                       accept="image/*"
@@ -1110,11 +1111,11 @@ const PDFViewer = ({
                     <img 
                       src={logoUrl} 
                       alt="Logo preview" 
-                      className="w-6 h-6 object-contain border rounded"
+                      className="w-6 h-6 object-contain border border-slate-600/30 rounded"
                     />
                     <button
                       onClick={removeLogo}
-                      className="p-1 rounded-md bg-red-100 text-red-600 hover:bg-red-200 text-xs"
+                      className="p-1 rounded-md bg-red-500/20 text-red-400 hover:bg-red-500/30 text-xs border border-red-500/30"
                       title="Remove logo"
                     >
                       ×
@@ -1127,7 +1128,7 @@ const PDFViewer = ({
                 <>
                   <Tooltip>
                     <TooltipTrigger asChild>
-                      <Button onClick={toggleRectangleMode} variant="outline" size="icon">
+                      <Button onClick={toggleRectangleMode} variant="outline" size="icon" className="bg-slate-700/50 border-slate-600/30 text-slate-300 hover:bg-slate-600/50">
                         <Pin className="w-4 h-4" />
                       </Button>
                     </TooltipTrigger>
@@ -1137,7 +1138,7 @@ const PDFViewer = ({
                   </Tooltip>
                   <Tooltip>
                     <TooltipTrigger asChild>
-                      <Button onClick={deleteSelectedRectangle} variant="destructive" size="icon">
+                      <Button onClick={deleteSelectedRectangle} className="bg-red-500/20 hover:bg-red-500/30 text-red-400 border border-red-500/30" size="icon">
                         <Trash2 className="w-4 h-4" />
                       </Button>
                     </TooltipTrigger>
@@ -1150,7 +1151,7 @@ const PDFViewer = ({
             </div>
             
             {/* Rectangle Stats */}
-            <div className="flex items-center space-x-4 text-sm text-gray-600">
+            <div className="flex items-center space-x-4 text-sm text-slate-400">
               <div className="flex items-center space-x-2">
                 <div className="w-3 h-3 bg-blue-500 rounded"></div>
                 <span>Auto: {localRectangles.filter(r => !r.isManual).length}</span>
@@ -1171,4 +1172,4 @@ const PDFViewer = ({
   );
 };
 
-export default PDFViewer; 
+export default PDFViewer;
