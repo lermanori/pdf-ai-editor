@@ -168,18 +168,6 @@ const PDFPreview = ({ file, fileUrl, translations, onBack, onGenerate, isProcess
     const currentPageRectangleIds = new Set(currentPageRectangles.map(r => r.id));
     const currentTranslations = (translations || []).filter(t => t.page === pageNumber - 1);
 
-    // Enhanced text styling to match PDF output
-    const textStyle = {
-        backgroundColor: 'rgba(255, 255, 255, 0.95)',
-        textColor: '#1a1a1a',
-        borderColor: '#cccccc',
-        borderWidth: 1,
-        padding: 4,
-        fontSize: 12,
-        fontFamily: 'Arial, sans-serif',
-        lineHeight: 1.3
-    };
-
     return (
         <div className="flex flex-col h-full glass-dark rounded-xl border border-cyan-500/30 shadow-2xl">
             {/* Toolbar */}
@@ -303,10 +291,11 @@ const PDFPreview = ({ file, fileUrl, translations, onBack, onGenerate, isProcess
                             
                             {showOverlays && currentTranslations.map((translation) => {
                                 const text = translation.translation || '';
-                                const fontSize = Math.max(10, Math.min(18, translation.height / 2.5));
+                                const fontSize = Math.max(10, Math.min(16, translation.height / 2.5));
+                                const padding = 4;
                                 
-                                // Calculate text wrapping
-                                const maxWidth = translation.width - (textStyle.padding * 2);
+                                // Calculate text wrapping to match PDF output
+                                const maxWidth = translation.width - (padding * 2);
                                 const words = text.split(' ');
                                 const lines = [];
                                 let currentLine = '';
@@ -334,23 +323,20 @@ const PDFPreview = ({ file, fileUrl, translations, onBack, onGenerate, isProcess
 
                                 return (
                                     <React.Fragment key={translation.id}>
-                                        {/* Enhanced background with styling */}
+                                        {/* Clean white background - no borders, matching PDF output */}
                                         <Rect
-                                            x={translation.x - textStyle.padding}
-                                            y={translation.y - textStyle.padding}
-                                            width={translation.width + (textStyle.padding * 2)}
-                                            height={translation.height + (textStyle.padding * 2)}
-                                            fill={textStyle.backgroundColor}
-                                            stroke={textStyle.borderColor}
-                                            strokeWidth={textStyle.borderWidth}
-                                            cornerRadius={2}
+                                            x={translation.x}
+                                            y={translation.y}
+                                            width={translation.width}
+                                            height={translation.height}
+                                            fill="white" // Pure white background
                                         />
                                         
-                                        {/* Enhanced text rendering */}
+                                        {/* Clean text rendering to match PDF */}
                                         {lines.map((line, index) => {
-                                            const lineY = translation.y + textStyle.padding + (index * fontSize * textStyle.lineHeight);
+                                            const lineY = translation.y + padding + (index * fontSize * 1.2);
                                             const lineWidth = line.length * (fontSize * 0.6);
-                                            const lineX = translation.x + translation.width - lineWidth - textStyle.padding;
+                                            const lineX = translation.x + translation.width - lineWidth - padding;
                                             
                                             return (
                                                 <Text
@@ -359,8 +345,8 @@ const PDFPreview = ({ file, fileUrl, translations, onBack, onGenerate, isProcess
                                                     x={lineX}
                                                     y={lineY}
                                                     fontSize={fontSize}
-                                                    fontFamily={textStyle.fontFamily}
-                                                    fill={textStyle.textColor}
+                                                    fontFamily="Arial, sans-serif"
+                                                    fill="black" // Pure black text
                                                     align="right"
                                                 />
                                             );
