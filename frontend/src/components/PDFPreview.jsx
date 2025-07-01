@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Document, Page, pdfjs } from 'react-pdf';
-import { Stage, Layer, Label, Tag, Text, Image, Circle, Rect } from 'react-konva';
+import { Stage, Layer, Rect, Text, Image } from 'react-konva';
 import { ArrowLeft, ArrowRight, Download, Eye, ZoomIn, ZoomOut, Sparkles } from 'lucide-react';
 import axios from 'axios';
 import { toast } from 'react-hot-toast';
@@ -164,72 +164,157 @@ const PDFPreview = ({ file, fileUrl, translations, onBack, onGenerate, isProcess
         }
     };
 
-    // AI-Powered Text Rendering Function
-    const renderAIStyledText = (translation) => {
-        const text = translation.translation || '';
+    // 🎯 AI-Powered Text Formatting Analysis (matching backend)
+    const analyzeTextFormatting = (text, containerWidth, containerHeight) => {
+        console.log('🤖 [PREVIEW AI FORMATTER] Analyzing text formatting requirements...');
         
-        // AI Style Analysis (matching backend logic)
-        const fontSize = Math.max(8, Math.min(18, translation.height / 2.5));
-        const lineHeight = fontSize * 1.15;
-        const padding = 3;
+        // AI-powered text analysis
+        const textLength = text.length;
+        const wordCount = text.split(/\s+/).length;
         
-        // Neural Text Wrapping Algorithm
-        const maxWidth = translation.width - (padding * 2);
+        // Calculate optimal font size based on container and content
+        const baseSize = Math.min(containerWidth / 20, containerHeight / 4);
+        let optimalFontSize = Math.max(8, Math.min(18, baseSize));
+        
+        // Adjust for text density
+        if (textLength > 200) optimalFontSize *= 0.8;
+        if (textLength < 50) optimalFontSize *= 1.2;
+        
+        // Calculate spacing and padding
+        const padding = Math.max(8, optimalFontSize * 0.5);
+        const lineHeight = optimalFontSize * 1.3;
+        
+        const formatting = {
+            fontSize: Math.round(optimalFontSize),
+            lineHeight: Math.round(lineHeight),
+            padding: Math.round(padding),
+            textAlign: 'center', // Center alignment for better appearance
+            maxLines: Math.floor((containerHeight - padding * 2) / lineHeight),
+            backgroundColor: 'white',
+            textColor: 'black',
+            borderRadius: 4
+        };
+        
+        console.log('🤖 [PREVIEW AI FORMATTER] Optimal formatting calculated:', {
+            textLength,
+            wordCount,
+            containerSize: `${containerWidth}x${containerHeight}`,
+            formatting
+        });
+        
+        return formatting;
+    };
+
+    // 🧠 Smart Text Wrapping with AI (matching backend)
+    const smartTextWrap = (text, maxWidth, fontSize, maxLines) => {
+        console.log('🧠 [PREVIEW SMART WRAPPER] Processing text for optimal layout...');
+        
         const words = text.split(/\s+/).filter(word => word.length > 0);
         const lines = [];
         let currentLine = '';
         
+        // Approximate character width for font sizing
+        const charWidth = fontSize * 0.6;
+        const maxCharsPerLine = Math.floor(maxWidth / charWidth);
+        
         for (const word of words) {
             const testLine = currentLine === '' ? word : currentLine + ' ' + word;
-            const testWidth = testLine.length * (fontSize * 0.6); // Approximate width calculation
             
-            if (testWidth <= maxWidth) {
+            if (testLine.length <= maxCharsPerLine) {
                 currentLine = testLine;
             } else {
                 if (currentLine !== '') {
                     lines.push(currentLine);
+                    if (lines.length >= maxLines) break; // Respect max lines
                     currentLine = word;
                 } else {
-                    // Word too long, break it
+                    // Word too long, break it intelligently
                     const chars = word.split('');
                     let partialWord = '';
                     for (const char of chars) {
                         const testChar = partialWord + char;
-                        if (testChar.length * (fontSize * 0.6) <= maxWidth) {
+                        if (testChar.length <= maxCharsPerLine) {
                             partialWord = testChar;
                         } else {
-                            if (partialWord) lines.push(partialWord);
+                            if (partialWord) {
+                                lines.push(partialWord);
+                                if (lines.length >= maxLines) break;
+                            }
                             partialWord = char;
                         }
                     }
-                    if (partialWord) currentLine = partialWord;
+                    if (partialWord && lines.length < maxLines) currentLine = partialWord;
                 }
             }
         }
         
-        if (currentLine !== '') {
+        if (currentLine !== '' && lines.length < maxLines) {
             lines.push(currentLine);
         }
+        
+        console.log('🧠 [PREVIEW SMART WRAPPER] Generated', lines.length, 'optimized lines');
+        return lines;
+    };
 
-        // Render each line with perfect positioning
-        return lines.map((line, index) => {
-            const lineY = translation.y + padding + (index * lineHeight);
-            const lineWidth = line.length * (fontSize * 0.6);
-            const lineX = translation.x + translation.width - lineWidth - padding;
-            
-            return (
-                <Text
-                    key={`${translation.id}-ai-line-${index}`}
-                    text={line}
-                    x={lineX}
-                    y={lineY}
-                    fontSize={fontSize}
-                    fontFamily="Arial, sans-serif"
-                    fill="black" // Pure black text
-                    align="right"
+    // 🎯 Perfect Preview Rendering Function
+    const renderPerfectPreview = (translation) => {
+        const text = translation.translation || '';
+        
+        // 🤖 AI Style Analysis (matching backend logic)
+        const aiFormatting = analyzeTextFormatting(text, translation.width, translation.height);
+        
+        // 🧠 Neural Text Wrapping Algorithm
+        const maxWidth = translation.width - (aiFormatting.padding * 2);
+        const wrappedText = smartTextWrap(text, maxWidth, aiFormatting.fontSize, aiFormatting.maxLines);
+        
+        // Calculate total text height for vertical centering
+        const totalTextHeight = wrappedText.length * aiFormatting.lineHeight;
+        const extraSpace = translation.height - totalTextHeight - (aiFormatting.padding * 2);
+        const verticalOffset = extraSpace > 0 ? extraSpace / 2 : 0;
+
+        return (
+            <React.Fragment key={translation.id}>
+                {/* 🎯 SOLID WHITE BACKGROUND (Clean Overlay) */}
+                <Rect
+                    x={translation.x}
+                    y={translation.y}
+                    width={translation.width}
+                    height={translation.height}
+                    fill="white"
+                    stroke="#e0e0e0"
+                    strokeWidth={0.5}
+                    cornerRadius={aiFormatting.borderRadius}
                 />
-            );
-        });
+                
+                {/* 🎯 AI-Formatted Text Rendering */}
+                {wrappedText.map((line, index) => {
+                    const lineWidth = line.length * (aiFormatting.fontSize * 0.6);
+                    
+                    // AI-powered text alignment (center for better appearance)
+                    let lineX;
+                    if (aiFormatting.textAlign === 'center') {
+                        lineX = translation.x + (translation.width - lineWidth) / 2;
+                    } else {
+                        lineX = translation.x + translation.width - lineWidth - aiFormatting.padding; // Right align
+                    }
+                    
+                    const lineY = translation.y + aiFormatting.padding + aiFormatting.fontSize + verticalOffset + (index * aiFormatting.lineHeight);
+                    
+                    return (
+                        <Text
+                            key={`${translation.id}-perfect-line-${index}`}
+                            text={line}
+                            x={lineX}
+                            y={lineY}
+                            fontSize={aiFormatting.fontSize}
+                            fontFamily="Arial, sans-serif"
+                            fill="black" // Pure black text
+                            align="left"
+                        />
+                    );
+                })}
+            </React.Fragment>
+        );
     };
 
     const currentPageRectangles = (originalRectangles || []).filter(r => r.page === pageNumber - 1);
@@ -357,16 +442,10 @@ const PDFPreview = ({ file, fileUrl, translations, onBack, onGenerate, isProcess
                                 />
                             )}
                             
-                            {/* AI-Powered Text Rendering */}
-                            {showOverlays && currentTranslations.map((translation) => (
-                                <React.Fragment key={translation.id}>
-                                    {/* NO BACKGROUND - Invisible integration */}
-                                    {/* Text floats naturally on the document */}
-                                    
-                                    {/* AI-Styled Text Rendering */}
-                                    {renderAIStyledText(translation)}
-                                </React.Fragment>
-                            ))}
+                            {/* 🎯 Perfect Preview Rendering */}
+                            {showOverlays && currentTranslations.map((translation) => 
+                                renderPerfectPreview(translation)
+                            )}
                         </Layer>
                     </Stage>
                 </div>

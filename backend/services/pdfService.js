@@ -116,117 +116,51 @@ class EnhancedNodeCanvasFactory {
 
 class PDFService {
   
-  // AI-Powered Style Analysis System
-  async analyzeOriginalTextStyle(pdfBuffer, rectangle) {
-    try {
-      console.log('🤖 [AI STYLE ANALYZER] Analyzing original text styling...');
-      
-      const pdfData = new Uint8Array(pdfBuffer);
-      const loadingTask = pdfjsLib.getDocument({
-        data: pdfData,
-        canvasFactory: new EnhancedNodeCanvasFactory(),
-        isEvalSupported: false,
-        disableFontFace: true,
-        verbosity: 0
-      });
-
-      const pdfDoc = await loadingTask.promise;
-      const page = await pdfDoc.getPage(rectangle.page + 1);
-      const viewport = page.getViewport({ scale: 1.0 });
-      const textContent = await page.getTextContent();
-      
-      // Calculate scale factor
-      const frontendWidth = 800;
-      const scale = viewport.width / frontendWidth;
-      
-      // Convert coordinates
-      const pdfX = rectangle.x * scale;
-      const pdfY = rectangle.y * scale;
-      const pdfWidth = rectangle.width * scale;
-      const pdfHeight = rectangle.height * scale;
-      
-      const rectTopFromBottom = viewport.height - pdfY;
-      const rectBottomFromBottom = rectTopFromBottom - pdfHeight;
-      
-      // Find text items in the area
-      const textItems = textContent.items.filter(item => {
-        if (!item.transform || !item.str || item.str.trim().length === 0) return false;
-        
-        const itemX = item.transform[4];
-        const itemY = item.transform[5];
-        const itemHeight = item.height || 12;
-        const itemWidth = item.width || (item.str.length * (itemHeight / 1.8));
-        const itemRight = itemX + itemWidth;
-
-        const xCheck = itemX < (pdfX + pdfWidth) && itemRight > pdfX;
-        const yCheck = itemY > rectBottomFromBottom && itemY < rectTopFromBottom;
-        
-        return xCheck && yCheck;
-      });
-
-      if (textItems.length === 0) {
-        console.log('🤖 [AI STYLE ANALYZER] No text items found, using default styling');
-        return this.getDefaultTextStyle(rectangle);
-      }
-
-      // AI Analysis: Extract styling patterns
-      const styles = textItems.map(item => ({
-        fontSize: item.height || 12,
-        fontFamily: item.fontName || 'Arial',
-        color: 'black',
-        lineHeight: (item.height || 12) * 1.2,
-        letterSpacing: 0,
-        wordSpacing: 0
-      }));
-
-      // Calculate optimal styling based on analysis
-      const avgFontSize = styles.reduce((sum, s) => sum + s.fontSize, 0) / styles.length;
-      const optimalFontSize = Math.max(8, Math.min(18, avgFontSize));
-      const optimalLineHeight = optimalFontSize * 1.15;
-
-      const analyzedStyle = {
-        fontSize: optimalFontSize,
-        lineHeight: optimalLineHeight,
-        fontFamily: 'Arial',
-        color: 'black',
-        textAlign: 'right',
-        padding: 3,
-        backgroundColor: 'transparent',
-        borderStyle: 'none'
-      };
-
-      console.log('🤖 [AI STYLE ANALYZER] Analysis complete:', {
-        originalItems: textItems.length,
-        avgOriginalSize: avgFontSize.toFixed(2),
-        optimalSize: optimalFontSize.toFixed(2),
-        style: analyzedStyle
-      });
-
-      return analyzedStyle;
-      
-    } catch (error) {
-      console.error('🤖 [AI STYLE ANALYZER] Error:', error);
-      return this.getDefaultTextStyle(rectangle);
-    }
-  }
-
-  getDefaultTextStyle(rectangle) {
-    const fontSize = Math.max(8, Math.min(16, rectangle.height / 3));
-    return {
-      fontSize,
-      lineHeight: fontSize * 1.15,
-      fontFamily: 'Arial',
-      color: 'black',
-      textAlign: 'right',
-      padding: 3,
-      backgroundColor: 'transparent',
-      borderStyle: 'none'
+  // AI Text Formatting Analysis
+  async analyzeTextFormatting(text, containerWidth, containerHeight) {
+    console.log('🤖 [AI FORMATTER] Analyzing text formatting requirements...');
+    
+    // AI-powered text analysis
+    const textLength = text.length;
+    const wordCount = text.split(/\s+/).length;
+    const avgWordLength = textLength / wordCount;
+    
+    // Calculate optimal font size based on container and content
+    const baseSize = Math.min(containerWidth / 20, containerHeight / 4);
+    let optimalFontSize = Math.max(8, Math.min(18, baseSize));
+    
+    // Adjust for text density
+    if (textLength > 200) optimalFontSize *= 0.8;
+    if (textLength < 50) optimalFontSize *= 1.2;
+    
+    // Calculate spacing and padding
+    const padding = Math.max(8, optimalFontSize * 0.5);
+    const lineHeight = optimalFontSize * 1.3;
+    
+    const formatting = {
+      fontSize: Math.round(optimalFontSize),
+      lineHeight: Math.round(lineHeight),
+      padding: Math.round(padding),
+      textAlign: 'center', // Center alignment for better appearance
+      maxLines: Math.floor((containerHeight - padding * 2) / lineHeight),
+      backgroundColor: 'white',
+      textColor: 'black',
+      borderRadius: 4
     };
+    
+    console.log('🤖 [AI FORMATTER] Optimal formatting calculated:', {
+      textLength,
+      wordCount,
+      containerSize: `${containerWidth}x${containerHeight}`,
+      formatting
+    });
+    
+    return formatting;
   }
 
-  // Neural Text Wrapping Algorithm
-  neuralTextWrap(text, maxWidth, font, fontSize) {
-    console.log('🧠 [NEURAL WRAPPER] Processing text:', text.substring(0, 50) + '...');
+  // Smart Text Wrapping with AI
+  smartTextWrap(text, maxWidth, font, fontSize, maxLines) {
+    console.log('🧠 [SMART WRAPPER] Processing text for optimal layout...');
     
     const words = text.split(/\s+/).filter(word => word.length > 0);
     const lines = [];
@@ -241,9 +175,10 @@ class PDFService {
       } else {
         if (currentLine !== '') {
           lines.push(currentLine);
+          if (lines.length >= maxLines) break; // Respect max lines
           currentLine = word;
         } else {
-          // Word too long, break it
+          // Word too long, break it intelligently
           const chars = word.split('');
           let partialWord = '';
           for (const char of chars) {
@@ -251,20 +186,23 @@ class PDFService {
             if (font.widthOfTextAtSize(testChar, fontSize) <= maxWidth) {
               partialWord = testChar;
             } else {
-              if (partialWord) lines.push(partialWord);
+              if (partialWord) {
+                lines.push(partialWord);
+                if (lines.length >= maxLines) break;
+              }
               partialWord = char;
             }
           }
-          if (partialWord) currentLine = partialWord;
+          if (partialWord && lines.length < maxLines) currentLine = partialWord;
         }
       }
     }
     
-    if (currentLine !== '') {
+    if (currentLine !== '' && lines.length < maxLines) {
       lines.push(currentLine);
     }
     
-    console.log('🧠 [NEURAL WRAPPER] Generated', lines.length, 'lines');
+    console.log('🧠 [SMART WRAPPER] Generated', lines.length, 'optimized lines');
     return lines;
   }
   
@@ -814,17 +752,12 @@ class PDFService {
         for (const translation of pageTranslations) {
           if (translation.translation && translation.translation !== 'Translation failed') {
             
-            console.log(`🤖 [AI PROCESSOR] Processing translation for page ${pageIndex + 1}:`, {
+            console.log(`🎯 [WHITE OVERLAY] Processing translation for page ${pageIndex + 1}:`, {
               id: translation.id,
-              originalId: translation.originalId,
               page: translation.page,
               frontendCoords: { x: translation.x, y: translation.y, width: translation.width, height: translation.height },
               translation: translation.translation
             });
-            
-            // AI-Powered Style Analysis
-            const pdfBuffer = await fs.readFile(inputPath);
-            const analyzedStyle = await this.analyzeOriginalTextStyle(pdfBuffer, translation);
             
             // Calculate the scale factor between the PDF and the frontend view
             const frontendWidth = 800; // This must match the hardcoded width in the frontend viewer
@@ -844,80 +777,98 @@ class PDFService {
             const pdfWidth = translation.width * scale;
             const pdfHeight = translation.height * scale;
             
-            console.log(`🤖 [AI PROCESSOR] Coordinate conversion for page ${pageIndex + 1}:`, {
+            console.log(`🎯 [WHITE OVERLAY] Coordinate conversion for page ${pageIndex + 1}:`, {
               pageWidth,
               frontendWidth,
               scale,
               frontendCoords: { x: translation.x, y: translation.y, width: translation.width, height: translation.height },
-              pdfCoords: { x: pdfX, y: pdfY, width: pdfWidth, height: pdfHeight },
-              analyzedStyle
+              pdfCoords: { x: pdfX, y: pdfY, width: pdfWidth, height: pdfHeight }
             });
             
             let text = translation.translation;
             const sanitizedText = text.replace(/[^\u0590-\u05FF\u0041-\u005A\u0061-\u007A\s\d.,!?"':-]/g, '');
 
-            console.log(`🤖 [AI PROCESSOR] Text processing for page ${pageIndex + 1}:`, {
+            console.log(`🎯 [WHITE OVERLAY] Text processing for page ${pageIndex + 1}:`, {
               originalText: text,
               sanitizedText: sanitizedText,
               textLength: sanitizedText.length
             });
 
-            // Draw INVISIBLE background (completely transparent)
-            // No background rectangle at all - text floats naturally
+            // 🎯 STEP 1: Draw SOLID WHITE BACKGROUND (Clean Overlay)
+            page.drawRectangle({
+              x: pdfX,
+              y: height - pdfY - pdfHeight, // Y is measured from the bottom in pdf-lib
+              width: pdfWidth,
+              height: pdfHeight,
+              color: rgb(1, 1, 1), // Pure white background
+              borderColor: rgb(0.9, 0.9, 0.9), // Light gray border
+              borderWidth: 0.5,
+            });
             
-            // Use AI-analyzed styling
-            const fontSize = analyzedStyle.fontSize;
-            const padding = analyzedStyle.padding;
-            const lineHeight = analyzedStyle.lineHeight;
+            // 🤖 STEP 2: AI-Powered Text Formatting Analysis
+            const aiFormatting = await this.analyzeTextFormatting(sanitizedText, pdfWidth, pdfHeight);
             
-            // Neural text wrapping with AI-optimized parameters
-            const wrappedText = this.neuralTextWrap(sanitizedText, pdfWidth - (padding * 2), hebrewFont, fontSize);
+            // 🧠 STEP 3: Smart Text Wrapping with AI
+            const wrappedText = this.smartTextWrap(
+              sanitizedText, 
+              pdfWidth - (aiFormatting.padding * 2), 
+              hebrewFont, 
+              aiFormatting.fontSize,
+              aiFormatting.maxLines
+            );
 
-            console.log(`🤖 [AI PROCESSOR] Neural text rendering for page ${pageIndex + 1}:`, {
-              fontSize,
-              lineHeight,
-              padding,
+            console.log(`🎯 [WHITE OVERLAY] AI-powered text rendering for page ${pageIndex + 1}:`, {
+              aiFormatting,
               wrappedText,
               textLines: wrappedText.length,
               boxCoords: { x: pdfX, y: height - pdfY - pdfHeight, width: pdfWidth, height: pdfHeight }
             });
 
             try {
-              // AI-Powered Text Rendering with Perfect Positioning
-              let yPos = height - pdfY - padding - fontSize;
+              // 🎯 STEP 4: Perfect Text Positioning with AI
+              const totalTextHeight = wrappedText.length * aiFormatting.lineHeight;
+              const startY = height - pdfY - aiFormatting.padding - aiFormatting.fontSize;
+              
+              // Center text vertically if there's extra space
+              const extraSpace = pdfHeight - totalTextHeight - (aiFormatting.padding * 2);
+              const verticalOffset = extraSpace > 0 ? extraSpace / 2 : 0;
 
               for (let i = 0; i < wrappedText.length; i++) {
                 const line = wrappedText[i];
-                const textWidth = hebrewFont.widthOfTextAtSize(line, fontSize);
+                const textWidth = hebrewFont.widthOfTextAtSize(line, aiFormatting.fontSize);
                 
-                // Perfect right alignment with AI-calculated positioning
-                const textX = pdfX + pdfWidth - textWidth - padding;
+                // AI-powered text alignment (center for better appearance)
+                let textX;
+                if (aiFormatting.textAlign === 'center') {
+                  textX = pdfX + (pdfWidth - textWidth) / 2;
+                } else {
+                  textX = pdfX + pdfWidth - textWidth - aiFormatting.padding; // Right align
+                }
+                
+                const textY = startY + verticalOffset - (i * aiFormatting.lineHeight);
                 
                 // Ensure text doesn't overflow the container
-                if (yPos > height - pdfY - pdfHeight + fontSize) {
-                  console.log(`🤖 [AI PROCESSOR] Rendering neural text line ${i + 1} on page ${pageIndex + 1}:`, {
+                if (textY > height - pdfY - pdfHeight + aiFormatting.fontSize) {
+                  console.log(`🎯 [WHITE OVERLAY] Rendering AI-formatted line ${i + 1} on page ${pageIndex + 1}:`, {
                     line,
                     textWidth,
                     textX,
-                    yPos,
-                    fontSize
+                    textY,
+                    fontSize: aiFormatting.fontSize
                   });
                   
                   page.drawText(line, {
                     x: textX,
-                    y: yPos,
+                    y: textY,
                     font: hebrewFont,
-                    size: fontSize,
+                    size: aiFormatting.fontSize,
                     color: rgb(0, 0, 0), // Pure black text
                   });
                 }
-                
-                // Move down for the next line with AI-optimized spacing
-                yPos -= lineHeight;
               }
-              console.log(`✅ Successfully rendered AI-styled Hebrew text on page ${pageIndex + 1}`);
+              console.log(`✅ Successfully rendered AI-formatted Hebrew text on page ${pageIndex + 1}`);
             } catch (textError) {
-              console.error(`❌ Error rendering AI-styled Hebrew text on page ${pageIndex + 1}:`, textError.message);
+              console.error(`❌ Error rendering AI-formatted Hebrew text on page ${pageIndex + 1}:`, textError.message);
             }
           } else {
             console.warn(`⚠️ Skipping failed translation on page ${pageIndex + 1}`);
