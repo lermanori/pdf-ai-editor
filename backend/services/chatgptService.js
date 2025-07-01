@@ -15,7 +15,7 @@ class ChatGPTService {
     }
   }
 
-  async translateImage(base64Image) {
+  async translateText(text) {
     try {
       if (!this.openai) {
         // Return mock translation for demo purposes
@@ -23,26 +23,18 @@ class ChatGPTService {
         return this.getMockTranslation();
       }
 
-      console.log('🤖 Sending image to OpenAI Vision API...');
+      console.log('🤖 Sending text to OpenAI for translation...');
 
       const response = await this.openai.chat.completions.create({
-        model: 'gpt-4o',
+        model: 'gpt-3.5-turbo',
         messages: [
+          // {
+          //   role: 'system',
+          //   content: 'You are a professional translator. Translate the given English text to natural Hebrew. Return only the Hebrew translation without any additional text, explanations, or formatting. If there is no English text to translate, return "אין טקסט לתרגום".'
+          // },
           {
             role: 'user',
-            content: [
-              {
-                type: 'text',
-                text: 'Translate all English text in this image to natural Hebrew. Return only the Hebrew translation without any additional text or explanations. If there is no English text, return "אין טקסט לתרגום".'
-              },
-              {
-                type: 'image_url',
-                image_url: {
-                  url: base64Image,
-                  detail: 'high'
-                }
-              }
-            ]
+            content: `Translate this text to Hebrew: "${text}"`
           }
         ],
         max_tokens: 500,
@@ -59,12 +51,18 @@ class ChatGPTService {
       return translation;
 
     } catch (error) {
-      console.error('❌ OpenAI Vision API error:', error.message);
+      console.error('❌ OpenAI API error:', error.message);
       
       // Return mock translation on error
       console.log('🔄 Falling back to mock translation');
       return this.getMockTranslation();
     }
+  }
+
+  // Keep the old method for backward compatibility if needed
+  async translateImage(base64Image) {
+    console.log('⚠️  translateImage method is deprecated. Use translateText instead.');
+    return this.translateText('Deprecated method called');
   }
 
   getMockTranslation() {

@@ -144,8 +144,7 @@ router.post('/', async (req, res) => {
     const translationMap = new Map();
     for (const text of uniqueTexts) {
       try {
-        const base64Image = await pdfService.createTextImage(text);
-        const translation = await chatgptService.translateImage(base64Image);
+        const translation = await chatgptService.translateText(text);
         translationMap.set(text, translation);
         console.log(`[TRANSLATE LOG] Translated "${text}" -> "${translation}"`);
         await new Promise(resolve => setTimeout(resolve, 500)); // Rate limiting

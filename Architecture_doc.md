@@ -16,7 +16,7 @@ State Mgmt	React Context or Zustand	UI state and global state
 Backend	Express.js	API endpoints and logic
 PDF Tools	pdf-lib, pdfjs-dist	Reading, editing, overlaying
 Image Tools	sharp, canvas	Cropping & base64 conversion
-External API	OpenAI Vision (gpt-4o)	AI translation from image
+External API	OpenAI Chat (gpt-3.5-turbo)	AI translation from text
 Storage	Local or S3	Uploaded PDFs and outputs
 
 🗂️ 3. Project Structure
@@ -52,7 +52,7 @@ Edit
      ⬇️
 [Express → Save file + Detect Rectangles]
      ⬇️
-[Send cropped images to GPT-4o]
+[Send extracted text to GPT-3.5-turbo]
      ⬇️
 [Receive Hebrew translations]
      ⬇️
